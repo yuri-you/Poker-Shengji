@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="author" content="Yuri">
+		<!-- <meta http-equiv="refresh" content="6;url=http://39.108.192.128/"> -->
+		<title>
+			升级
+		</title>
+        <link rel="stylesheet" type="text/css" href="/static/plugins/bootstrap/bootstrap.css">
+        <link rel="stylesheet" type="text/css" href="/static/css/card.css">
+        <link rel="stylesheet" type="text/css" href="/static/css/background.css">
+        <link rel="stylesheet" type="text/css" href="/static/css/game.css">
+	</head>
+	<body>
+        <div id="whole">
+            <div id="left" class='leftside'>
+                <font size="6" style="color:#00a6ff"  class='leftside'>name:</font>
+                <font size="6" style="color:#00a6ff"  id='user_name' class='leftside'>{{name}}</font>
+                <font size="6" style="color:#00a6ff"  class='leftside'>&emsp;room:</font>
+                <font size="6" style="color:#00a6ff"  id='room' class='leftside'>{{room}}</font>
+            </div>
+            <div id="right" class='rightside'>
+                <div id="game_level">
+                <font size="6" style="color:#228B22">现在打:&emsp;</font>
+                <font size="6" style="color:red"  id="our_level">A </font>
+                <font size="6" style="color:#228B22" >: </font>
+                <font size="6" style="color:red" id="rival_level">2&emsp;</font>
+                </div>
+                <div id="partner_div">
+                <font size="6" style="color:#228B22">你的队友:</font>
+                <font size="6" style="color:red" id="partner"></font>
+                <font size="6" style="color:#228B22">&emsp;</font>
+                </div>
+            </div>
+        </div>
+		<script src="/static/plugins/jquery/jquery.js"></script>
+		<script src="/static/js/game.js"></script>
+	</body>
+</html>

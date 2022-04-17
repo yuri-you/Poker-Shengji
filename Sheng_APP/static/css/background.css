@@ -1,0 +1,11 @@
+body{
+    font-size:20px;
+    font-family:"宋体";
+    background-image:url("/static/img/background.jpg");
+    background-size: 100% 100%;
+    width:device-width;
+    height: 700px;
+}
+.hide{
+    display: none;
+}

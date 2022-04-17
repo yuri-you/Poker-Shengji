@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="author" content="Yuri">
+		<!-- <meta http-equiv="refresh" content="6;url=http://39.108.192.128/"> -->
+		<title>
+			Welcome
+		</title>
+        <link rel="stylesheet" type="text/css" href="/static/plugins/bootstrap/bootstrap.css">
+        <link rel="stylesheet" type="text/css" href="/static/css/card.css">
+        <link rel="stylesheet" type="text/css" href="/static/css/background.css">
+	</head>
+	<body>
+        <div>
+            <ul class="nav nav-pills" id="menu">
+                <li role="presentation" onclick="change_name()" ><a href="#"><font size="6" style="color:#00a6ff" id="user_name">登录</font></a></li>
+                <li role="presentation" onclick="add_room()"><a href="#" ><font size="6"style="color:#00a6ff" id="room">加入房间</font></a></li>
+            </ul>
+        </div>
+        <div style='color:white'><h1>{{a}}</h1></div>
+		<script src="/static/plugins/jquery/jquery.js"></script>
+        <script type="text/javascript">
+            function change_name(){
+                var t=prompt("请输入用户名:","")
+                if(t!=null){
+                    $("#user_name").text(t)
+                }
+            }
+            $.extend({
+                StandardPost:function(url,args){
+                    var body = $(document.body),
+                        form = $('<form method="get"></form>'),
+                        input;
+                    form.attr({"action":url});
+                    $.each(args,function(key,value){
+                        input = $("<input type='hidden'>");
+                        input.attr({"name":key});
+                        input.val(value);
+                        form.append(input);
+                    });
+
+                    form.appendTo(document.body);
+                    form.submit();
+                    document.body.removeChild(form[0]);
+                }
+            });
+            function add_room(){
+                if($("#user_name").text()=="登录"){
+                    alert("请先输入用户名")
+                }
+                else{
+                    var room_id=prompt("请输入房间号:","")
+                    if(room_id==''){
+                        return;
+                    }
+                    $.StandardPost("/addroom/",{name:$("#user_name").text(),room:room_id});
+                }
+            }
+        </script>
+	</body>
+</html>
