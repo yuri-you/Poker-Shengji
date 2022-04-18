@@ -18,13 +18,8 @@
                 <div >
                 <font size="5" style="color:#00a6ff" >name:</font>
                 <font size="5" style="color:#ffff41"  id='user_name' >{{name}}</font>
-                <div class="clear:both;"></div>
-                </div>
-                <div>
                 <font size="5" style="color:#00a6ff" >room:</font>
                 <font size="5" style="color:#ffff41"  id='room' >{{room}}</font>
-                </div>
-                <div>
                 <font size="5" style="color:#00a6ff" >state:</font>
                 <font size="5" style="color:#ffff41"  id='self_ready' >未准备</font>
                 </div>
@@ -40,6 +35,16 @@
                 <div id="partner_div">
                 <font size="5" style="color:#41ffe3">你的队友:</font>
                 <font size="5" style="color:red" id="partner_name1"></font>
+                <font size="5" style="color:#41ffe3">&emsp;</font>
+                </div>
+                <div id="color_information">
+                <font size="5" style="color:#41ffe3">花色:</font>
+                <font size="5" style="color:red" id="main_color"></font>
+                <font size="5" style="color:#41ffe3">&emsp;</font>
+                </div>
+                <div id="color_from">
+                <font size="5" style="color:#41ffe3">亮主:</font>
+                <font size="5" style="color:red" id="color_owner"></font>
                 <font size="5" style="color:#41ffe3">&emsp;</font>
                 </div>
             </div>
@@ -58,8 +63,8 @@
                         </div>
                     </div>
                     <div id="partner_card">
-                        <img src="/static/img/poker/2D.jpg" class="card_figure img47">
-                        <img src="/static/img/poker/2H.jpg" class="card_figure img48">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img470">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img480">
                     </div>
                 </div>
                 <div style="height: 120px;">
@@ -76,22 +81,22 @@
                         </div>
                     </div>
                     <div id="rival1_cards" style="float:left">
-                        <img src="/static/img/poker/2D.jpg" class="card_figure img35">
-                        <img src="/static/img/poker/2H.jpg" class="card_figure img36">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img350">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img360">
                     </div>
                     <div id="di_cards">
-                        <img src="/static/img/poker/2D.jpg" class="card_figure img44">
-                        <img src="/static/img/poker/2H.jpg" class="card_figure img45">
-                        <img src="/static/img/poker/2D.jpg" class="card_figure img46">
-                        <img src="/static/img/poker/2H.jpg" class="card_figure img47">
-                        <img src="/static/img/poker/2D.jpg" class="card_figure img48">
-                        <img src="/static/img/poker/2H.jpg" class="card_figure img49">
-                        <img src="/static/img/poker/2D.jpg" class="card_figure img50">
-                        <img src="/static/img/poker/2H.jpg" class="card_figure img51">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img440">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img450">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img460">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img470">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img480">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img490">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img500">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img510">
                     </div>
                     <div id="rival2_cards" style="float:right">
-                        <img src="/static/img/poker/2D.jpg" class="card_figure img59">
-                        <img src="/static/img/poker/2H.jpg" class="card_figure img60">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img590">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img600">
                     </div>
                     <div id="rival2 information" style="float: right;">
                         <div id="rival2 img">
@@ -107,8 +112,8 @@
                     <!-- interval -->
                 </div>
                 <div id="out_card">
-                        <img src="/static/img/poker/2D.jpg" class="card_figure img47">
-                        <img src="/static/img/poker/2H.jpg" class="card_figure img48">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img470">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img480">
                 </div>
                 <div style="height: 140px;">
                     <!-- interval -->
@@ -138,23 +143,14 @@
 		<script src="/static/plugins/jquery/jquery.js"></script>
 		<script src="/static/js/game.js"></script>
         <script type="text/javascript">
-            for(var m=0;m<10;++m){
-                var t=document.createElement("img");
-                t.src="/static/img/poker/bigjoker.jpg";
-                $(t).addClass("img"+(42+m));
-                $(t).addClass("mycard");
-                t.onclick=function(){up_card(this)}
-                 $("#my_card").append(t)
-            }
-            function up_card(self){
-                console.log($(self))
-                if($(self).hasClass("up")){
-                    $(self).removeClass("up");
-                }
-                else{
-                    $(self).addClass("up");
-                }
-            }
+            // for(var m=0;m<10;++m){
+            //     var t=document.createElement("img");
+            //     t.src="/static/img/poker/bigjoker.jpg";
+            //     $(t).addClass("img"+(42+m));
+            //     $(t).addClass("mycard");
+            //     t.onclick=function(){up_card(this)}
+            //      $("#my_card").append(t)
+            // }
         </script>
 	</body>
 </html>

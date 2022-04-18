@@ -1,6 +1,7 @@
 alert("成功加入房间")
-setInterval("update_message()","5000")
+setInterval("update_message()","400")
 // update_message()
+var is_up=Array(25).fill(false);
 function update_message(){
     $.ajax({
         url:"/requestdata",
@@ -50,6 +51,22 @@ function update_message(){
                     $("#rival1_ready").text("未准备")
                 }
             }   
+            if(res.state!=0){
+                $("#my_card").html('');
+                for(var k=0;k<res.card.length;++k){
+                    var t=document.createElement("img");
+                    t.src="/static/img/poker/"+res.card[k]+".jpg";
+                    var number=(49-parseInt(res.card.length*13/2)/10+k*1.3)
+                    var str="img"+parseInt(number)+parseInt((number*10)%10)
+                    $(t).attr("id",k)
+                    if(is_up[k]){
+                        $(t).addClass("up");
+                    }
+                    $(t).addClass(str);
+                    t.onclick=function(){up_card(this)}
+                    $("#my_card").append(t)
+                }
+            }
         }
     })
 }
@@ -79,5 +96,23 @@ function self_ready(){
             dataType:"JSON"})
         $("#zhunbei").text("准备")
         $("#self_ready").text("未准备")
+    }
+}
+
+function up_card(self){
+    // console.log($(self))
+    //     if($(self).hasClass("up")){
+    //         $(self).removeClass("up");
+    //     }
+    //     else{
+    //         $(self).addClass("up");
+    //     }
+    if(is_up[$(self).attr("id")]){
+        is_up[Number($(self).attr("id"))]=false
+        $(self).removeClass("up");
+    }
+    else{
+        is_up[Number($(self).attr("id"))]=true
+        $(self).addClass("up");
     }
 }
