@@ -1,19 +1,83 @@
 alert("成功加入房间")
-setInterval("update_message()","2000")
+setInterval("update_message()","5000")
+// update_message()
 function update_message(){
     $.ajax({
         url:"/requestdata",
         type:"get",
         data:{
+            action:"information",
             name:$("#user_name").text(),
             room:$("#room").text()
         },
         dataType:"JSON",
         success:function(res){
-            $("#our_level").text(res.our_level);
-            $("#rival_level").text(res.rival_level);
-            var t=$("#partner")
-            $("#partner").text(res.partner);
+            var tmp_name=$("#user_name").text()
+            var id=res.playerinformation[tmp_name][0]
+            $("#our_level").text(res.level[id%2]);
+            $("#rival_level").text(res.level[(id+1)%2]);
+            if(res.playerinformation[tmp_name][1]){
+                $("#self_ready").text("已准备")
+            }
+            else{
+                $("#self_ready").text("未准备")
+            }
+            if((id+1)%4<res.player.length){
+                $("#rival2_name").text(res.player[(id+1)%4])
+                if(res.playerinformation[res.player[(id+1)%4]][1]){
+                    $("#rival2_ready").text("已准备")
+                }
+                else{
+                    $("#rival2_ready").text("未准备")
+                }
+            }
+            if((id+2)%4<res.player.length){
+                $("#partner_name1").text(res.player[(id+2)%4])
+                $("#partner_name2").text(res.player[(id+2)%4])
+                if(res.playerinformation[res.player[(id+2)%4]][1]){
+                    $("#partner_ready").text("已准备")
+                }
+                else{
+                    $("#partner_ready").text("未准备")
+                }
+            }
+            if((id+3)%4<res.player.length){
+                $("#rival1_name").text(res.player[(id+3)%4])
+                if(res.playerinformation[res.player[(id+3)%4]][1]){
+                    $("#rival1_ready").text("已准备")
+                }
+                else{
+                    $("#rival1_ready").text("未准备")
+                }
+            }   
         }
     })
+}
+function self_ready(){
+    if($("#zhunbei").text()=="准备"){
+        $.ajax({
+            url:"/requestdata",
+            type:"get",
+            data:{
+                action:"ready",
+                name:$("#user_name").text(),
+                room:$("#room").text()
+            },
+            dataType:"JSON"})
+        $("#zhunbei").text("取消准备")
+        $("#self_ready").text("已准备")
+    }
+    else{
+        $.ajax({
+            url:"/requestdata",
+            type:"get",
+            data:{
+                action:"unready",
+                name:$("#user_name").text(),
+                room:$("#room").text()
+            },
+            dataType:"JSON"})
+        $("#zhunbei").text("准备")
+        $("#self_ready").text("未准备")
+    }
 }

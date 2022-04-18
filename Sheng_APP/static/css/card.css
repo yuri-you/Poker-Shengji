@@ -1,94 +1,403 @@
 .up{
-    margin-top: -1cm;
+    margin-top: -0.6cm;
 }
 .img0{
 	position:absolute;
-	left:0px;
-}.img1{
+	left:0%;
+}
+.img1{
 	position:absolute;
-	left:20px;
-}.img2{
+	left:1%;
+}
+.img2{
 	position:absolute;
-	left:40px;
-}.img3{
+	left:2%;
+}
+.img3{
 	position:absolute;
-	left:60px;
-}.img4{
+	left:3%;
+}
+.img4{
 	position:absolute;
-	left:80px;
-}.img5{
+	left:4%;
+}
+.img5{
 	position:absolute;
-	left:100px;
-}.img6{
+	left:5%;
+}
+.img6{
 	position:absolute;
-	left:120px;
-}.img7{
+	left:6%;
+}
+.img7{
 	position:absolute;
-	left:140px;
-}.img8{
+	left:7%;
+}
+.img8{
 	position:absolute;
-	left:160px;
-}.img9{
+	left:8%;
+}
+.img9{
 	position:absolute;
-	left:180px;
-}.img10{
+	left:9%;
+}
+.img10{
 	position:absolute;
-	left:200px;
-}.img11{
+	left:10%;
+}
+.img11{
 	position:absolute;
-	left:220px;
-}.img12{
+	left:11%;
+}
+.img12{
 	position:absolute;
-	left:240px;
-}.img13{
+	left:12%;
+}
+.img13{
 	position:absolute;
-	left:260px;
-}.img14{
+	left:13%;
+}
+.img14{
 	position:absolute;
-	left:280px;
-}.img15{
+	left:14%;
+}
+.img15{
 	position:absolute;
-	left:300px;
-}.img16{
+	left:15%;
+}
+.img16{
 	position:absolute;
-	left:320px;
-}.img17{
+	left:16%;
+}
+.img17{
 	position:absolute;
-	left:340px;
-}.img18{
+	left:17%;
+}
+.img18{
 	position:absolute;
-	left:360px;
-}.img19{
+	left:18%;
+}
+.img19{
 	position:absolute;
-	left:380px;
-}.img20{
+	left:19%;
+}
+.img20{
 	position:absolute;
-	left:400px;
-}.img21{
+	left:20%;
+}
+.img21{
 	position:absolute;
-	left:420px;
-}.img22{
+	left:21%;
+}
+.img22{
 	position:absolute;
-	left:440px;
-}.img23{
+	left:22%;
+}
+.img23{
 	position:absolute;
-	left:460px;
-}.img24{
+	left:23%;
+}
+.img24{
 	position:absolute;
-	left:480px;
-}.img25{
+	left:24%;
+}
+.img25{
 	position:absolute;
-	left:500px;
-}.img26{
+	left:25%;
+}
+.img26{
 	position:absolute;
-	left:520px;
-}.img27{
+	left:26%;
+}
+.img27{
 	position:absolute;
-	left:540px;
-}.img28{
+	left:27%;
+}
+.img28{
 	position:absolute;
-	left:560px;
-}.img29{
+	left:28%;
+}
+.img29{
 	position:absolute;
-	left:580px;
+	left:29%;
+}
+.img30{
+	position:absolute;
+	left:30%;
+}
+.img31{
+	position:absolute;
+	left:31%;
+}
+.img32{
+	position:absolute;
+	left:32%;
+}
+.img33{
+	position:absolute;
+	left:33%;
+}
+.img34{
+	position:absolute;
+	left:34%;
+}
+.img35{
+	position:absolute;
+	left:35%;
+}
+.img36{
+	position:absolute;
+	left:36%;
+}
+.img37{
+	position:absolute;
+	left:37%;
+}
+.img38{
+	position:absolute;
+	left:38%;
+}
+.img39{
+	position:absolute;
+	left:39%;
+}
+.img40{
+	position:absolute;
+	left:40%;
+}
+.img41{
+	position:absolute;
+	left:41%;
+}
+.img42{
+	position:absolute;
+	left:42%;
+}
+.img43{
+	position:absolute;
+	left:43%;
+}
+.img44{
+	position:absolute;
+	left:44%;
+}
+.img45{
+	position:absolute;
+	left:45%;
+}
+.img46{
+	position:absolute;
+	left:46%;
+}
+.img47{
+	position:absolute;
+	left:47%;
+}
+.img48{
+	position:absolute;
+	left:48%;
+}
+.img49{
+	position:absolute;
+	left:49%;
+}
+.img50{
+	position:absolute;
+	left:50%;
+}
+.img51{
+	position:absolute;
+	left:51%;
+}
+.img52{
+	position:absolute;
+	left:52%;
+}
+.img53{
+	position:absolute;
+	left:53%;
+}
+.img54{
+	position:absolute;
+	left:54%;
+}
+.img55{
+	position:absolute;
+	left:55%;
+}
+.img56{
+	position:absolute;
+	left:56%;
+}
+.img57{
+	position:absolute;
+	left:57%;
+}
+.img58{
+	position:absolute;
+	left:58%;
+}
+.img59{
+	position:absolute;
+	left:59%;
+}
+.img60{
+	position:absolute;
+	left:60%;
+}
+.img61{
+	position:absolute;
+	left:61%;
+}
+.img62{
+	position:absolute;
+	left:62%;
+}
+.img63{
+	position:absolute;
+	left:63%;
+}
+.img64{
+	position:absolute;
+	left:64%;
+}
+.img65{
+	position:absolute;
+	left:65%;
+}
+.img66{
+	position:absolute;
+	left:66%;
+}
+.img67{
+	position:absolute;
+	left:67%;
+}
+.img68{
+	position:absolute;
+	left:68%;
+}
+.img69{
+	position:absolute;
+	left:69%;
+}
+.img70{
+	position:absolute;
+	left:70%;
+}
+.img71{
+	position:absolute;
+	left:71%;
+}
+.img72{
+	position:absolute;
+	left:72%;
+}
+.img73{
+	position:absolute;
+	left:73%;
+}
+.img74{
+	position:absolute;
+	left:74%;
+}
+.img75{
+	position:absolute;
+	left:75%;
+}
+.img76{
+	position:absolute;
+	left:76%;
+}
+.img77{
+	position:absolute;
+	left:77%;
+}
+.img78{
+	position:absolute;
+	left:78%;
+}
+.img79{
+	position:absolute;
+	left:79%;
+}
+.img80{
+	position:absolute;
+	left:80%;
+}
+.img81{
+	position:absolute;
+	left:81%;
+}
+.img82{
+	position:absolute;
+	left:82%;
+}
+.img83{
+	position:absolute;
+	left:83%;
+}
+.img84{
+	position:absolute;
+	left:84%;
+}
+.img85{
+	position:absolute;
+	left:85%;
+}
+.img86{
+	position:absolute;
+	left:86%;
+}
+.img87{
+	position:absolute;
+	left:87%;
+}
+.img88{
+	position:absolute;
+	left:88%;
+}
+.img89{
+	position:absolute;
+	left:89%;
+}
+.img90{
+	position:absolute;
+	left:90%;
+}
+.img91{
+	position:absolute;
+	left:91%;
+}
+.img92{
+	position:absolute;
+	left:92%;
+}
+.img93{
+	position:absolute;
+	left:93%;
+}
+.img94{
+	position:absolute;
+	left:94%;
+}
+.img95{
+	position:absolute;
+	left:95%;
+}
+.img96{
+	position:absolute;
+	left:96%;
+}
+.img97{
+	position:absolute;
+	left:97%;
+}
+.img98{
+	position:absolute;
+	left:98%;
+}
+.img99{
+	position:absolute;
+	left:99%;
 }

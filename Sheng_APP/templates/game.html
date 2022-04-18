@@ -13,28 +13,148 @@
         <link rel="stylesheet" type="text/css" href="/static/css/game.css">
 	</head>
 	<body>
-        <div id="whole">
+        <div id="top">
             <div id="left" class='leftside'>
-                <font size="6" style="color:#00a6ff"  class='leftside'>name:</font>
-                <font size="6" style="color:#00a6ff"  id='user_name' class='leftside'>{{name}}</font>
-                <font size="6" style="color:#00a6ff"  class='leftside'>&emsp;room:</font>
-                <font size="6" style="color:#00a6ff"  id='room' class='leftside'>{{room}}</font>
+                <div >
+                <font size="5" style="color:#00a6ff" >name:</font>
+                <font size="5" style="color:#ffff41"  id='user_name' >{{name}}</font>
+                <div class="clear:both;"></div>
+                </div>
+                <div>
+                <font size="5" style="color:#00a6ff" >room:</font>
+                <font size="5" style="color:#ffff41"  id='room' >{{room}}</font>
+                </div>
+                <div>
+                <font size="5" style="color:#00a6ff" >state:</font>
+                <font size="5" style="color:#ffff41"  id='self_ready' >未准备</font>
+                </div>
             </div>
             <div id="right" class='rightside'>
                 <div id="game_level">
-                <font size="6" style="color:#228B22">现在打:&emsp;</font>
-                <font size="6" style="color:red"  id="our_level">A </font>
-                <font size="6" style="color:#228B22" >: </font>
-                <font size="6" style="color:red" id="rival_level">2&emsp;</font>
+                <font size="5" style="color:#41ffe3">现在打:</font>
+                <font size="5" style="color:red"  id="our_level">A </font>
+                <font size="5" style="color:#41ffe3" >: </font>
+                <font size="5" style="color:red" id="rival_level">2</font>
+                <font size="5" >&emsp;</font>
                 </div>
                 <div id="partner_div">
-                <font size="6" style="color:#228B22">你的队友:</font>
-                <font size="6" style="color:red" id="partner"></font>
-                <font size="6" style="color:#228B22">&emsp;</font>
+                <font size="5" style="color:#41ffe3">你的队友:</font>
+                <font size="5" style="color:red" id="partner_name1"></font>
+                <font size="5" style="color:#41ffe3">&emsp;</font>
+                </div>
+            </div>
+            <div style="clear:both"></div>
+        </div>
+        <div id="middle">
+            <div id="main">
+                <div id="partner" class="center" style="margin-top: -70px;">
+                    <div id="partner information" style="height: 110px;margin-top: 0px;">
+                        <!-- <div id="partner img" > -->
+                            <img src="/static/img/nake.jpeg" class="user_figure" style="position:absolute;display: inline;left:45%;">
+                        <!-- </div> -->
+                        <div id="partner name" style="position:absolute;display: inline;left:53%;">
+                            <font size="5" style="color:#41ffe3" id="partner_name2">Yuri</font><br/>
+                            <font size="5" style="color:#ffff41" id="partner_ready">未准备</font>
+                        </div>
+                    </div>
+                    <div id="partner_card">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img47">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img48">
+                    </div>
+                </div>
+                <div style="height: 120px;">
+                    <!-- interval -->
+                </div>
+                <div id="rivals" >
+                    <div id="rival1 information" style="float: left;">
+                        <div id="rival1 img">
+                            <img src="/static/img/nake.jpeg" class="user_figure">
+                        </div>
+                        <div id="rival1 name">
+                            <font size="5" style="color:#41ffe3" id="rival1_name">1</font><br/>
+                            <font size="5" style="color:#ffff41" id="rival1_ready">未准备</font>
+                        </div>
+                    </div>
+                    <div id="rival1_cards" style="float:left">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img35">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img36">
+                    </div>
+                    <div id="di_cards">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img44">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img45">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img46">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img47">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img48">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img49">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img50">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img51">
+                    </div>
+                    <div id="rival2_cards" style="float:right">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img59">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img60">
+                    </div>
+                    <div id="rival2 information" style="float: right;">
+                        <div id="rival2 img">
+                            <img src="/static/img/nake.jpeg" class="user_figure">
+                        </div>
+                        <div id="rival2 name">
+                            <font size="5" style="color:#41ffe3" id="rival2_name">1</font><br/>
+                            <font size="5" style="color:#ffff41" id="rival2_ready">未准备</font>
+                        </div>
+                    </div>
+                </div>
+                <div style="height: 140px;">
+                    <!-- interval -->
+                </div>
+                <div id="out_card">
+                        <img src="/static/img/poker/2D.jpg" class="card_figure img47">
+                        <img src="/static/img/poker/2H.jpg" class="card_figure img48">
+                </div>
+                <div style="height: 140px;">
+                    <!-- interval -->
+                </div>
+                <div id="my_card">
+                </div>
+            </div>
+            <div class="btn-group" role="group" aria-label="..." style="position:fixed;bottom:0px;left:0%;border:0;padding:0;">
+                <button type="button" class="btn btn-default disabled" id="Spade"><font size="3" style="color:black" id="partner_name2">♠</font></button>
+                <button type="button" class="btn btn-default disabled" id="Heart"><font size="3" style="color:red" id="partner_name2">♥</font></button>
+                <button type="button" class="btn btn-default disabled" id="Club"><font size="3" style="color:#008B45" id="partner_name2">♣</font></button></button>
+                <button type="button" class="btn btn-default disabled" id="Diamond"><font size="3" style="color:#00BFFF" id="partner_name2">◇</font></button>
+                <button type="button" class="btn btn-default disabled" id="NT" ><font size="3" style="color:#696969" id="partner_name2">NT</font></button>
+            </div>
+            <div id="down_buttons" style="position:fixed;bottom:0px;right:0%">
+                <div>
+                    <button type="button"  class="btn btn-default navbar-btn" style="text-align:center;width: 70px;" onclick="self_ready()" id="zhunbei">准备</button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-default navbar-btn" style="text-align:center;width: 70px;">上一轮</button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-default navbar-btn" style="text-align:center;width: 70px;">底牌</button>
                 </div>
             </div>
         </div>
 		<script src="/static/plugins/jquery/jquery.js"></script>
 		<script src="/static/js/game.js"></script>
+        <script type="text/javascript">
+            for(var m=0;m<10;++m){
+                var t=document.createElement("img");
+                t.src="/static/img/poker/bigjoker.jpg";
+                $(t).addClass("img"+(42+m));
+                $(t).addClass("mycard");
+                t.onclick=function(){up_card(this)}
+                 $("#my_card").append(t)
+            }
+            function up_card(self){
+                console.log($(self))
+                if($(self).hasClass("up")){
+                    $(self).removeClass("up");
+                }
+                else{
+                    $(self).addClass("up");
+                }
+            }
+        </script>
 	</body>
 </html>

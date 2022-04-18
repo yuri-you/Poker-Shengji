@@ -1,6 +1,33 @@
 .rightside{
+    margin-right: 20px;
     float:right;
 }
 .leftside{
+    margin-left: 20px;
     float:left;
+}
+.rightbutton{
+    text-align:center;
+    width: 70px;
+}
+.fix_bottom{        
+    position: absolute;
+    bottom: 10px;
+    width: auto;
+    height: auto;
+}
+.user_figure{
+    height: 100px;
+    width: 100px;
+}
+.center{
+    text-align:center;
+}
+.card_figure{
+    width: 60px;
+    height: 90px;
+}
+.mycard{
+    width: 80px;
+    height: 120px;
 }

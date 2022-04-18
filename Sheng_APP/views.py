@@ -72,29 +72,32 @@ def addroom(request):
     name=request.GET["name"]
     room=request.GET["room"]
     if room not in game_data:
-        game_data[room]={'player':[],'level':[2,2]}
+        game_data[room]={'state':0,'player':[],'playerinformation':dict(),'level':[2,2]}#state 0未开始，1发牌，
     if name not in game_data[room]['player']:
         if len(game_data[room]['player'])==4:
             return render(request,"login.html",{'a':"房间满了,请换房间加入"})
         else:
+            game_data[room]['playerinformation'][name]=[len(game_data[room]['player']),False]
             game_data[room]['player'].append(name)
     return render(request,'game.html',{'name':name,'room':room})
 def requestdata(request):
     global game_data
     name=request.GET["name"]
     room=request.GET["room"]
-    res=dict()
-    self_id=0
-    for i in range(4):
-        if game_data[room]['player'][i]==name:
-            self_id=i
-            break
-    res["rival_level"]=game_data[room]['level'][(self_id+1)%2]
-    res["our_level"]=game_data[room]['level'][self_id%2]
-    if ((self_id+2)%4)<len(game_data[room]['player']):#队友在房间
-        res["partner"]=game_data[room]['player'][(self_id+2)%4]
-    else:
-        res["partner"]="     "
-    ans=json.dumps(res)
-    return HttpResponse(ans)
+    print(game_data[room]['playerinformation'])
+    if request.GET["action"]=="information":
+        res=dict()
+        res['player']=game_data[room]['player']
+        res['playerinformation']=game_data[room]['playerinformation']
+        res['level']=game_data[room]['level']
+        ans=json.dumps(res)
+        return HttpResponse(ans)
+    elif request.GET["action"]=='ready':
+        game_data[room]['playerinformation'][name][1]=True
+        return
+    elif request.GET["action"]=='unready':
+        game_data[room]['playerinformation'][name][1]=False
+        return
+def testgamehtml(request):
+    return render(request,'game.html',{'name':"Yuri",'room':"1023"})
 # Create your views here.
