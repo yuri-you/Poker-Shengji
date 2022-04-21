@@ -32,5 +32,6 @@ def main():
     print(sort_card("2D"))
     print(sort_card("2H"))
     print(sort_card("joker"))
+    a=1
 if __name__=='__main__':
     main()
