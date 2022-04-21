@@ -51,7 +51,7 @@
                 }
                 else{
                     var room_id=prompt("请输入房间号:","")
-                    if(room_id==''){
+                    if(room_id==null || room_id==''){
                         return;
                     }
                     $.StandardPost("/addroom/",{name:$("#user_name").text(),room:room_id});

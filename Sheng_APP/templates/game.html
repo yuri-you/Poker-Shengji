@@ -39,12 +39,12 @@
                 </div>
                 <div id="color_information">
                 <font size="5" style="color:#41ffe3">花色:</font>
-                <font size="5" style="color:red" id="main_color"></font>
+                <font size="5" style="color:red" id="trump"></font>
                 <font size="5" style="color:#41ffe3">&emsp;</font>
                 </div>
                 <div id="color_from">
                 <font size="5" style="color:#41ffe3">亮主:</font>
-                <font size="5" style="color:red" id="color_owner"></font>
+                <font size="5" style="color:red" id="trumpholder"></font>
                 <font size="5" style="color:#41ffe3">&emsp;</font>
                 </div>
             </div>
@@ -121,12 +121,12 @@
                 <div id="my_card">
                 </div>
             </div>
-            <div class="btn-group" role="group" aria-label="..." style="position:fixed;bottom:0px;left:0%;border:0;padding:0;">
-                <button type="button" class="btn btn-default disabled" id="Spade"><font size="3" style="color:black" id="partner_name2">♠</font></button>
-                <button type="button" class="btn btn-default disabled" id="Heart"><font size="3" style="color:red" id="partner_name2">♥</font></button>
-                <button type="button" class="btn btn-default disabled" id="Club"><font size="3" style="color:#008B45" id="partner_name2">♣</font></button></button>
-                <button type="button" class="btn btn-default disabled" id="Diamond"><font size="3" style="color:#00BFFF" id="partner_name2">◇</font></button>
-                <button type="button" class="btn btn-default disabled" id="NT" ><font size="3" style="color:#696969" id="partner_name2">NT</font></button>
+            <div class="btn-group" role="group" aria-label="..." style="position:fixed;bottom:0px;left:0%;border:0;padding:0;" id="trump_color">
+                <button type="button" class="btn btn-default disabled" id="S_color" onclick="calltrump(this)"><font size="3" style="color:black" id="partner_name2">♠</font></button>
+                <button type="button" class="btn btn-default disabled" id="H_color" onclick="calltrump(this)"><font size="3" style="color:red" id="partner_name2">♥</font></button>
+                <button type="button" class="btn btn-default disabled" id="C_color" onclick="calltrump(this)"><font size="3" style="color:#008B45" id="partner_name2">♣</font></button></button>
+                <button type="button" class="btn btn-default disabled" id="D_color" onclick="calltrump(this)"><font size="3" style="color:#00BFFF" id="partner_name2">◇</font></button>
+                <button type="button" class="btn btn-default disabled" id="NT" onclick="calltrump(this)"><font size="3" style="color:#696969" id="partner_name2">NT</font></button>
             </div>
             <div id="down_buttons" style="position:fixed;bottom:0px;right:0%">
                 <div>

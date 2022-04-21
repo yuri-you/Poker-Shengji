@@ -21,5 +21,7 @@ urlpatterns = [
     path("login/",views.login),
     path("addroom/",views.addroom),
     path("requestdata/",views.requestdata),
-    path("testhtml/",views.testgamehtml)
+    path("testhtml/",views.testgamehtml),
+    path("ready/",views.ready),
+    path("calltrump/",views.calltrump)
 ]
