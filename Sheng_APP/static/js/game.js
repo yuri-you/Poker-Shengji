@@ -1,7 +1,10 @@
 alert("成功加入房间")
 setInterval("update_message()","400")
 // update_message()
-var game_date={'mycard':[],'trumpcard':[],'nowtrump':0}
+var game_data_mycard=[]
+var game_data_trumpcard=[]
+var game_data_nowtrump=0
+var game_data_state
 var is_up=Array(25).fill(false);
 function update_message(){
     $.ajax({
@@ -16,10 +19,10 @@ function update_message(){
         success:function(res){
             var tmp_name=$("#user_name").text()
             var id=res.playerinformation[tmp_name][0]
-            game_date['state']=res.state
+            game_data_state=res.state
             $("#our_level").text(res.level[id%2]);
             $("#rival_level").text(res.level[(id+1)%2]);
-            game_date['nowtrump']=res.trump
+            game_data_nowtrump=res.trump
             switch(res.trump){
                 case 0:$("#trump").text("");break;
                 case 1:
@@ -98,11 +101,15 @@ function update_message(){
             }
             else{
                 $("#my_card").html('');
-                game_date['mycard']=res.card
-                game_date['trumpcard']=[]
+                game_data_mycard=res.card
+                game_data_trumpcard=[]
                 for(var k=0;k<res.card.length;++k){
-                    if(res.card[k][0]==res.nowlevel)game_date['trumpcard'].append(res.card[k])
-                    if(res.card[k]=='joker'||res.card[k]=='bigjoker')game_date['trumpcard'].append(res.card[k])
+                    if(res.card[k][0]==res.nowlevel){
+                        game_data_trumpcard.push(res.card[k])
+                    }
+                    if(res.card[k]=='joker'||res.card[k]=='bigjoker'){
+                        game_data_trumpcard.push(res.card[k])
+                    }
                     var t=document.createElement("img");
                     t.src="/static/img/poker/"+res.card[k]+".jpg";
                     var number=(49-parseInt(res.card.length*13/2)/10+k*1.3)
@@ -117,36 +124,35 @@ function update_message(){
                 }
                 if(res.state==1){
                     $("#trump_color").children().addClass("disabled")
-                    var trump_to_call=recoginze_trump(game_data['trumpcard'])
-                    for(var available_trump in trump_to_call.keys()){
-                        if(available_trump=='bigjoker'){//大王
-                            if(trump_to_call[available_trump]==2&&$("#user_name").text()!=$("#trumpholder").text()){
+                    var trump_to_call=recoginze_trump(game_data_trumpcard)
+                    console.log(trump_to_call)
+                    if(trump_to_call[5]==2){//大王一对
+                        if($("#user_name").text()!=$("#trumpholder").text()){
                                 //大王成对并且自己没叫
-                                $("#NT").removeClass("disabled")
-                            }                
+                            $("#NT").removeClass("disabled")
+                        }                
+                    }
+                    if(trump_to_call[4]==2){//小王
+                        if($("#user_name").text()!=$("#trumpholder").text()&&game_data_nowtrump!=10){
+                            $("#NT").removeClass("disabled")
                         }
-                        else if(available_trump=='joker'){//小王
-                            if(trump_to_call[available_trump]==2&&$("#user_name").text()!=$("#trumpholder").text()&&game_date['nowtrump']!=10){
-                                $("#NT").removeClass("disabled")
+                    }
+                    for(var t=0;t<4;++t){
+                        if(trump_to_call[t]==2){
+                            if(game_data_nowtrump<5){
+                                if($("#user_name").text()!=$("#trumpholder").text()){
+                                    $("#"+int_to_color(t+1)+'_color').removeClass("disabled")
+                                }
+                                else if(t+1==game_data_nowtrump){
+                                    //加固该花色
+                                    $("#"+available_trump[1]+'_color').removeClass("disabled")
+                                }
                             }
                         }
                         else{
-                            if(trump_to_call[available_trump]==2){
-                                if(game_date['nowtrump']<5){
-                                    if($("#user_name").text()!=$("#trumpholder").text()){
-                                        $("#"+available_trump[1]+'_color').removeClass("disabled")
-                                    }
-                                    else if(color_to_int(available_trump[1])==game_date['nowtrump']){
-                                        //加固该花色
-                                        $("#"+available_trump[1]+'_color').removeClass("disabled")
-                                    }
-                                }
-                                else{
-                                    if(game_date['nowtrump']==0){
-                                        $("#"+available_trump[1]+'_color').removeClass("disabled")
-                                    }
-                                }
-                            }
+                            if(trump_to_call[t]==1&&game_data_nowtrump==0){
+                                $("#"+int_to_color(t+1)+'_color').removeClass("disabled")
+                            }     
                         }
                     }
                 }
@@ -194,10 +200,17 @@ function up_card(self){
     }
 }
 function recoginze_trump(card){
-    var ans=dict()
-    for(var t in card){
-        if(t in ans.keys())ans[t]+=1
-        else ans[t]=1
+    var ans=[0,0,0,0,0,0]
+    for(var i=0;i<card.length;++i){
+        var t=card[i]
+        switch(t[1]){
+            case "i":ans[5]+=1;break;//bigjoker
+            case 'o':ans[4]+=1;break;//joker
+            case 'S':ans[3]+=1;break;
+            case 'H':ans[2]+=1;break;
+            case 'C':ans[1]+=1;break;
+            case 'D':ans[0]+=1;break;
+        }
     }
     return ans
 }
@@ -222,23 +235,17 @@ function calltrump(self){
     else{
         var color=$(self).attr("id")
         var trump=0
-        var trump_to_call=recoginze_trump(game_data['trumpcard'])
+        var trump_to_call=recoginze_trump(game_data_trumpcard)
         if(color=="NT"){
-            if(trump_to_call['bigjoker']==2)trump=10
+            if(trump_to_call[5]==2)trump=10
             else trump=9
         }
         else{
-            for(var t in trump_to_call.keys()){
-                if(t[1]==color[0]){
-                    if(trump_to_call[t]==2){
-                        trump=color_to_int(t[1])+4
-                    }
-                    else{
-                        trump=color_to_int(t[1])
-                    }
-                    break;
-                }
-
+            if(trump_to_call[color_to_int(color[0])-1]==2){
+                trump=color_to_int(color[0])+4
+            }
+            else{
+                trump=color_to_int(color[0])
             }
         }
         $.ajax({

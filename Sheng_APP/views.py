@@ -1,7 +1,7 @@
 from http.client import HTTPResponse
 from django.shortcuts import render,HttpResponse
 import os,random,json,pymysql,time
-
+test_number=4
 game_data=dict()
 poker=[]
 number=str()
@@ -123,7 +123,7 @@ def requestdata(request):
         res['trump']=game_data[room]['trump']#0没人，1方块，2梅花，3红桃，4黑桃，5双方块，。。。9小王，10大王
         res['trumpholder']=game_data[room]['trumpholder']
         if game_data[room]['state']!=0:#发牌
-            total_time=10
+            total_time=20
             after_time=time.time()-game_data[room]['begin_time']
             if game_data[room]['state']==1:
                 if after_time<total_time:
@@ -131,7 +131,7 @@ def requestdata(request):
                     c=int(after_time/total_time*25)
                     game_data[room]['playercard'][name]=sorted(poker[b:b+c],key=sort_card,reverse=True)
                 else:#第一次发完
-                    game_data[room]['state']=2
+                    game_data[room]['state']=1
                     for i in game_data[room]['player']:
                         begin=game_data[room]['playerinformation'][i][0]*25
                         game_data[room]['playercard'][i]=sorted(poker[begin:begin+25],key=sort_card,reverse=True)
@@ -140,7 +140,7 @@ def requestdata(request):
                     print(1)
             res['card']=game_data[room]['playercard'][name]
         ans=json.dumps(res)
-        print(ans)
+        # print(ans)
         return HttpResponse(ans)
 def ready(request):
     global game_data
@@ -148,7 +148,7 @@ def ready(request):
     name=request.GET["name"]
     room=request.GET["room"]
     def test_begin_game():
-        if len(game_data[room]['playerinformation'].keys())<2:return
+        if len(game_data[room]['playerinformation'].keys())<test_number:return
         for i in game_data[room]['playerinformation'].values():
             if not i[1]:return
         random.shuffle(poker)
@@ -172,10 +172,11 @@ def calltrump(request):
     global poker
     name=request.GET["name"]
     room=request.GET["room"]
-    trump=request.GET["trump"]
-    print(trump)
+    trump=int(request.GET["trump"])
     now_trump=game_data[room]['trump']
-    if  trump<9 and int((trump-1)/4)<=int((now_trump-1)/4):#被别人先叫了
+    print(trump)
+    print(now_trump)
+    if  trump<9 and now_trump!=0 and int((trump-1)/4)<=int((now_trump-1)/4):#被别人先叫了
         return HttpResponse("")
     else:
         game_data[room]['trump']=trump
