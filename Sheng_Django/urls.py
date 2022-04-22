@@ -23,5 +23,6 @@ urlpatterns = [
     path("requestdata/",views.requestdata),
     path("testhtml/",views.testgamehtml),
     path("ready/",views.ready),
-    path("calltrump/",views.calltrump)
+    path("calltrump/",views.calltrump),
+    path("reallocate/",views.reallocate),
 ]

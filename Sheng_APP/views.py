@@ -1,10 +1,11 @@
 from http.client import HTTPResponse
 from django.shortcuts import render,HttpResponse
 import os,random,json,pymysql,time
-test_number=1
-allocate_time=13
+test_number=4
+allocate_time=15
 wait_time=10
 activate_mysql=False
+set_trump=14
 game_data=dict()
 poker=[]
 number=str()
@@ -164,7 +165,7 @@ def ready(request):
         #     game_data[room]['player']
         game_data[room]['begin_time']=time.time()
         game_data[room]['state']=1
-        game_data[room]['nowlevel']=11
+        game_data[room]['nowlevel']=set_trump
         game_data[room]['trump']=0
         game_data[room]['trumpholder']=''
     if request.GET["action"]=='ready':
@@ -190,7 +191,24 @@ def calltrump(request):
         game_data[room]['trump']=trump
         game_data[room]['trumpholder']=name
         return HttpResponse("")
-    
+def reallocate(request):
+    global game_data
+    global poker
+    name=request.GET["name"]
+    room=request.GET["room"]
+    def test_begin_game():
+        if len(game_data[room]['playerinformation'].keys())<test_number:return
+        for i in game_data[room]['playerinformation'].values():
+            if not i[1]:return
+        random.shuffle(poker)
+        # for i in game_data[room]['player']:
+        #     game_data[room]['player']
+        game_data[room]['begin_time']=time.time()
+        game_data[room]['state']=1
+        game_data[room]['nowlevel']=set_trump
+        game_data[room]['trump']=0
+        game_data[room]['trumpholder']=''
+    test_begin_game()
 def testgamehtml(request):
     return render(request,'game.html',{'name':"Yuri",'room':"1023"})
 # Create your views here.

@@ -152,8 +152,18 @@ function update_message(){
                             f2.src='/static/img/poker/bigjoker.jpg'
                             $(f1).addClass('card_figure')
                             $(f2).addClass('card_figure')
-                            $(f1).addClass('img470')
-                            $(f2).addClass('img480')
+                            if(difference==0 || difference==2){
+                                $(f1).addClass('img470')
+                                $(f2).addClass('img480')
+                            }
+                            else if(difference==1){
+                                $(f1).addClass('img800')
+                                $(f2).addClass('img810')
+                            }
+                            else{
+                                $(f1).addClass('img200')
+                                $(f2).addClass('img210')
+                            }
                             $(trumpholder_relatedname).append(f1)
                             $(trumpholder_relatedname).append(f2)
                         }
@@ -164,8 +174,18 @@ function update_message(){
                             f2.src='/static/img/poker/joker.jpg'
                             $(f1).addClass('card_figure')
                             $(f2).addClass('card_figure')
-                            $(f1).addClass('img470')
-                            $(f2).addClass('img480')
+                            if(difference==0 || difference==2){
+                                $(f1).addClass('img470')
+                                $(f2).addClass('img480')
+                            }
+                            else if(difference==1){
+                                $(f1).addClass('img800')
+                                $(f2).addClass('img810')
+                            }
+                            else{
+                                $(f1).addClass('img200')
+                                $(f2).addClass('img210')
+                            }
                             $(trumpholder_relatedname).append(f1)
                             $(trumpholder_relatedname).append(f2)
                         }
@@ -178,8 +198,18 @@ function update_message(){
                             f2.src='/static/img/poker/'+cardname+trumpcolor+'.jpg'
                             $(f1).addClass('card_figure')
                             $(f2).addClass('card_figure')
-                            $(f1).addClass('img470')
-                            $(f2).addClass('img480')
+                            if(difference==0 || difference==2){
+                                $(f1).addClass('img470')
+                                $(f2).addClass('img480')
+                            }
+                            else if(difference==1){
+                                $(f1).addClass('img800')
+                                $(f2).addClass('img810')
+                            }
+                            else{
+                                $(f1).addClass('img200')
+                                $(f2).addClass('img210')
+                            }
                             $(trumpholder_relatedname).append(f1)
                             $(trumpholder_relatedname).append(f2)
                         }
@@ -189,7 +219,15 @@ function update_message(){
                             var f1=document.createElement("img");
                             f1.src='/static/img/poker/'+cardname+trumpcolor+'.jpg'
                             $(f1).addClass('card_figure')
-                            $(f1).addClass('img475')
+                            if(difference==0 || difference==2){
+                                $(f1).addClass('img475')
+                            }
+                            else if(difference==1){
+                                $(f1).addClass('img805')
+                            }
+                            else{
+                                $(f1).addClass('img205')
+                            }
                             $(trumpholder_relatedname).append(f1)
                         }
                     }
@@ -293,6 +331,16 @@ function recoginze_trump(card){
         }
     }
     return ans
+}
+function reallocate(){
+    $.ajax({
+        url:"/reallocate",
+        type:"get",
+        data:{
+            name:$("#user_name").text(),
+            room:$("#room").text(),
+        },
+        dataType:"JSON"})
 }
 function color_to_int(color){
     switch(color){
