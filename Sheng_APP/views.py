@@ -1,7 +1,10 @@
 from http.client import HTTPResponse
 from django.shortcuts import render,HttpResponse
 import os,random,json,pymysql,time
-test_number=4
+test_number=1
+allocate_time=13
+wait_time=10
+activate_mysql=False
 game_data=dict()
 poker=[]
 number=str()
@@ -121,23 +124,28 @@ def requestdata(request):
         res['state']=game_data[room]['state']
         res['nowlevel']=game_data[room]['nowlevel']
         res['trump']=game_data[room]['trump']#0没人，1方块，2梅花，3红桃，4黑桃，5双方块，。。。9小王，10大王
-        res['trumpholder']=game_data[room]['trumpholder']
+        res['trumpholder']=game_data[room]['trumpholder']            
+        res['wait_time']=-1#不是等待时间
         if game_data[room]['state']!=0:#发牌
-            total_time=20
             after_time=time.time()-game_data[room]['begin_time']
             if game_data[room]['state']==1:
-                if after_time<total_time:
+                if after_time<allocate_time:
                     b=(game_data[room]['playerinformation'][name][0])*25
-                    c=int(after_time/total_time*25)
+                    c=int(after_time/allocate_time*25)
                     game_data[room]['playercard'][name]=sorted(poker[b:b+c],key=sort_card,reverse=True)
                 else:#第一次发完
-                    game_data[room]['state']=1
-                    for i in game_data[room]['player']:
-                        begin=game_data[room]['playerinformation'][i][0]*25
-                        game_data[room]['playercard'][i]=sorted(poker[begin:begin+25],key=sort_card,reverse=True)
+                    if after_time<allocate_time+wait_time:
+                        res['wait_time']=allocate_time+wait_time-after_time
+                    else:
+                        game_data[room]['state']=2
+                        for i in game_data[room]['player']:
+                            begin=game_data[room]['playerinformation'][i][0]*25
+                            game_data[room]['playercard'][i]=sorted(poker[begin:begin+25],key=sort_card,reverse=True)
             else:
                 if len(game_data[room]['playercard'][name])!=25:
                     print(1)
+                # else:
+                #     game_data[room]['playercard'][i]=sorted(game_data[room]['playercard'][],key=sort_card,reverse=True)
             res['card']=game_data[room]['playercard'][name]
         ans=json.dumps(res)
         # print(ans)
@@ -156,7 +164,7 @@ def ready(request):
         #     game_data[room]['player']
         game_data[room]['begin_time']=time.time()
         game_data[room]['state']=1
-        game_data[room]['nowlevel']=8
+        game_data[room]['nowlevel']=11
         game_data[room]['trump']=0
         game_data[room]['trumpholder']=''
     if request.GET["action"]=='ready':

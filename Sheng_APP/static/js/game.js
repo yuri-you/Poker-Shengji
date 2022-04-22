@@ -1,5 +1,5 @@
 alert("成功加入房间")
-setInterval("update_message()","400")
+setInterval("update_message()","200")
 // update_message()
 var game_data_mycard=[]
 var game_data_trumpcard=[]
@@ -63,6 +63,17 @@ function update_message(){
                     break;
             }
             $("#trumpholder").text(res.trumpholder)
+            $('#out_card').empty();
+            $('#rival2_card').empty();
+            $('#partner_card').empty();
+            $('#rival1_card').empty();
+            $('#di_card').empty();
+            if(res.wait_time!=-1){
+                $('#di_card').text(parseInt(res.wait_time))
+                $('#di_card').css("color",'yellow')
+                $('#di_card').css("font-size",'30px')
+                $('#di_card').addClass("img490")
+            }
             if(res.state==0){//准备阶段
                 if(res.playerinformation[tmp_name][1]){
                     $("#self_ready").text("已准备")
@@ -104,7 +115,7 @@ function update_message(){
                 game_data_mycard=res.card
                 game_data_trumpcard=[]
                 for(var k=0;k<res.card.length;++k){
-                    if(res.card[k][0]==res.nowlevel){
+                    if(res.card[k][0]==number_to_level(res.nowlevel)){
                         game_data_trumpcard.push(res.card[k])
                     }
                     if(res.card[k]=='joker'||res.card[k]=='bigjoker'){
@@ -123,6 +134,65 @@ function update_message(){
                     $("#my_card").append(t)
                 }
                 if(res.state==1){
+                    if(res.trumpholder!=''){
+                        var trumpholderid=res.playerinformation[res.trumpholder][0]
+                        var difference=(trumpholderid-id+4)%4
+                        var trumpholder_relatedname=''
+                        switch(difference){
+                            case 0:trumpholder_relatedname='#out_card';break;
+                            case 1:trumpholder_relatedname='#rival2_card';break;
+                            case 2:trumpholder_relatedname='#partner_card';break;
+                            case 3:trumpholder_relatedname='#rival1_card';break;
+                        }
+                        console.log(trumpholder_relatedname)
+                        if(res.trump==10){
+                            var f1=document.createElement("img");
+                            f1.src='/static/img/poker/bigjoker.jpg'
+                            var f2=document.createElement("img");
+                            f2.src='/static/img/poker/bigjoker.jpg'
+                            $(f1).addClass('card_figure')
+                            $(f2).addClass('card_figure')
+                            $(f1).addClass('img470')
+                            $(f2).addClass('img480')
+                            $(trumpholder_relatedname).append(f1)
+                            $(trumpholder_relatedname).append(f2)
+                        }
+                        else if(res.trump==9){
+                            var f1=document.createElement("img");
+                            f1.src='/static/img/poker/joker.jpg'
+                            var f2=document.createElement("img");
+                            f2.src='/static/img/poker/joker.jpg'
+                            $(f1).addClass('card_figure')
+                            $(f2).addClass('card_figure')
+                            $(f1).addClass('img470')
+                            $(f2).addClass('img480')
+                            $(trumpholder_relatedname).append(f1)
+                            $(trumpholder_relatedname).append(f2)
+                        }
+                        else if(res.trump>4){
+                            var trumpcolor=int_to_color(res.trump-4)
+                            var cardname=number_to_level(res.nowlevel)
+                            var f1=document.createElement("img");
+                            f1.src='/static/img/poker/'+cardname+trumpcolor+'.jpg'
+                            var f2=document.createElement("img");
+                            f2.src='/static/img/poker/'+cardname+trumpcolor+'.jpg'
+                            $(f1).addClass('card_figure')
+                            $(f2).addClass('card_figure')
+                            $(f1).addClass('img470')
+                            $(f2).addClass('img480')
+                            $(trumpholder_relatedname).append(f1)
+                            $(trumpholder_relatedname).append(f2)
+                        }
+                        else if(res.trump>0){
+                            var trumpcolor=int_to_color(res.trump)
+                            var cardname=number_to_level(res.nowlevel)
+                            var f1=document.createElement("img");
+                            f1.src='/static/img/poker/'+cardname+trumpcolor+'.jpg'
+                            $(f1).addClass('card_figure')
+                            $(f1).addClass('img475')
+                            $(trumpholder_relatedname).append(f1)
+                        }
+                    }
                     $("#trump_color").children().addClass("disabled")
                     var trump_to_call=recoginze_trump(game_data_trumpcard)
                     console.log(trump_to_call)
@@ -145,7 +215,7 @@ function update_message(){
                                 }
                                 else if(t+1==game_data_nowtrump){
                                     //加固该花色
-                                    $("#"+available_trump[1]+'_color').removeClass("disabled")
+                                    $("#"+int_to_color(t+1)+'_color').removeClass("disabled")
                                 }
                             }
                         }
@@ -159,6 +229,16 @@ function update_message(){
             }
         }
     })
+}
+function number_to_level(number){
+    switch(number){
+        case 14:return 'A';
+        case 13:return 'K';
+        case 12:return 'Q';
+        case 11:return 'J';
+        case 10:return 'T';
+        default:return number
+    }
 }
 function self_ready(){
     if($("#zhunbei").text()=="准备"){
