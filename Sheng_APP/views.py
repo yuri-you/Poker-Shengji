@@ -1,11 +1,13 @@
 from http.client import HTTPResponse
 from django.shortcuts import render,HttpResponse
-import os,random,json,pymysql,time
-test_number=4
+import os,random,json,pymysql,time,datetime
+test_number=1
 allocate_time=15
 wait_time=10
-activate_mysql=False
+activate_mysql=True
 set_trump=14
+random_card=True
+cardtime="2022-04-23 02:49:00"
 game_data=dict()
 poker=[]
 number=str()
@@ -93,6 +95,7 @@ def requestdata(request):
     room=request.GET["room"]
     def sort_card(str1):
         global game_data
+        global poker
         if str1=="bigjoker":return 54
         elif str1=="joker":return 53
         color=str1[1]
@@ -157,10 +160,22 @@ def ready(request):
     name=request.GET["name"]
     room=request.GET["room"]
     def test_begin_game():
+        global game_data
+        global poker
         if len(game_data[room]['playerinformation'].keys())<test_number:return
         for i in game_data[room]['playerinformation'].values():
             if not i[1]:return
-        random.shuffle(poker)
+        if random_card:
+            random.shuffle(poker)
+            record_poker(poker)
+        else:
+            conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password="lPVVX9pMskl6Vzoj",database="shengji")
+            cursor=conn.cursor(cursor=pymysql.cursors.DictCursor)
+            cursor.execute("use shengji;")
+            instruction="select card_information from shengji where time=%(n1)s;"
+            cursor.execute(instruction,{"n1":cardtime})
+            fetch_card=cursor.fetchall()
+            poker=json.loads(fetch_card[0]['card_information'])
         # for i in game_data[room]['player']:
         #     game_data[room]['player']
         game_data[room]['begin_time']=time.time()
@@ -197,10 +212,22 @@ def reallocate(request):
     name=request.GET["name"]
     room=request.GET["room"]
     def test_begin_game():
+        global game_data
+        global poker
         if len(game_data[room]['playerinformation'].keys())<test_number:return
         for i in game_data[room]['playerinformation'].values():
             if not i[1]:return
-        random.shuffle(poker)
+        if random_card:
+            random.shuffle(poker)
+            record_poker(poker)
+        else:
+            conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password="lPVVX9pMskl6Vzoj",database="shengji")
+            cursor=conn.cursor(cursor=pymysql.cursors.DictCursor)
+            cursor.execute("use shengji;")
+            instruction="select card_information from shengji where time=%(n1)s;"
+            cursor.execute(instruction,{"n1":cardtime})
+            fetch_card=cursor.fetchall()
+            poker=json.loads(fetch_card[0]['card_information'])
         # for i in game_data[room]['player']:
         #     game_data[room]['player']
         game_data[room]['begin_time']=time.time()
@@ -211,4 +238,16 @@ def reallocate(request):
     test_begin_game()
 def testgamehtml(request):
     return render(request,'game.html',{'name':"Yuri",'room':"1023"})
+def record_poker(poker):
+    if activate_mysql:
+        conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password="lPVVX9pMskl6Vzoj",database="shengji")
+        cursor=conn.cursor(cursor=pymysql.cursors.DictCursor)
+        cursor.execute("use shengji;")
+        nowtime=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        f=open("log.txt",'a')
+        card_information=json.dumps(poker)
+        f.write(nowtime+'\n')
+        instruction="insert shengji(time,card_information) values(%(n1)s,%(n2)s);"
+        cursor.execute(instruction,{"n1":nowtime,"n2":card_information})
+        conn.commit()
 # Create your views here.
