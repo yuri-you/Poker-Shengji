@@ -111,27 +111,29 @@ function update_message(){
                 }   
             }
             else{
-                $("#my_card").html('');
-                game_data_mycard=res.card
-                game_data_trumpcard=[]
-                for(var k=0;k<res.card.length;++k){
-                    if(res.card[k][0]==number_to_level(res.nowlevel)){
-                        game_data_trumpcard.push(res.card[k])
+                if(res.change){
+                    $("#my_card").empty();
+                    game_data_mycard=res.card
+                    game_data_trumpcard=[]
+                    for(var k=0;k<res.card.length;++k){
+                        if(res.card[k][0]==number_to_level(res.nowlevel)){
+                            game_data_trumpcard.push(res.card[k])
+                        }
+                        if(res.card[k]=='joker'||res.card[k]=='bigjoker'){
+                            game_data_trumpcard.push(res.card[k])
+                        }
+                        var t=document.createElement("img");
+                        t.src="/static/img/poker/"+res.card[k]+".jpg";
+                        var number=(49-parseInt(res.card.length*13/2)/10+k*1.3)
+                        var str="img"+parseInt(number)+parseInt((number*10)%10)
+                        $(t).attr("id",k)
+                        // if(is_up[k]){
+                        //     $(t).addClass("up");
+                        // }
+                        $(t).addClass(str);
+                        t.onclick=function(){up_card(this)}
+                        $("#my_card").append(t)
                     }
-                    if(res.card[k]=='joker'||res.card[k]=='bigjoker'){
-                        game_data_trumpcard.push(res.card[k])
-                    }
-                    var t=document.createElement("img");
-                    t.src="/static/img/poker/"+res.card[k]+".jpg";
-                    var number=(49-parseInt(res.card.length*13/2)/10+k*1.3)
-                    var str="img"+parseInt(number)+parseInt((number*10)%10)
-                    $(t).attr("id",k)
-                    if(is_up[k]){
-                        $(t).addClass("up");
-                    }
-                    $(t).addClass(str);
-                    t.onclick=function(){up_card(this)}
-                    $("#my_card").append(t)
                 }
                 if(res.state==1){
                     if(res.trumpholder!=''){
