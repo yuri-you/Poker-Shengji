@@ -25,4 +25,5 @@ urlpatterns = [
     path("ready/",views.ready),
     path("calltrump/",views.calltrump),
     path("reallocate/",views.reallocate),
+    path("maidi/",views.maidi),
 ]

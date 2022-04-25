@@ -2,11 +2,11 @@ from http.client import HTTPResponse
 from django.shortcuts import render,HttpResponse
 import os,random,json,pymysql,time,datetime,threading
 locker=threading.Lock()
-test_number=2
-allocate_time=15
+test_number=1
+allocate_time=3
 wait_time=5
 activate_mysql=False
-set_trump=14
+set_trump=13
 random_card=True
 cardtime="2022-04-23 02:49:00"
 game_data=dict()
@@ -56,15 +56,12 @@ poker.append("bigjoker")
 #     #     for i in li:
 #     #         if i in a:
 #     #             if a[i]>=2:
-#     #                 print(i)
 #     #             else: a[i]+=1
 #     #         else:
 #     #             a[i]=1
 #     # y=poker[0:time+1]
-#     # print(y)
 #     # x=sorted(y,key=sort_card)
 #     # # x=sorted(poker[0:time+1].sort(key=sort_card,reverse=True)
-#     # print(x)
 #     # checklegal(poker[0:time+1])
 #     # checklegal(sorted(poker[0:time+1],key=sort_card,reverse=True))
 #     t={"time":time,"name":sorted(poker[0:time+1],key=sort_card,reverse=True)}
@@ -92,6 +89,7 @@ def addroom(request):
 def requestdata(request):
     global game_data
     global poker
+    global locker
     name=request.GET["name"]
     room=request.GET["room"]
     def sort_card(str1):
@@ -120,7 +118,6 @@ def requestdata(request):
             if number>game_data[room]['nowlevel']:card_number=number-2
             else: card_number=number-1
             return color_level*12+card_number
-    # print(game_data[room]['playerinformation'])
     if request.GET["action"]=="information":
         locker.acquire()
         res=dict()
@@ -132,15 +129,14 @@ def requestdata(request):
         res['trump']=game_data[room]['trump']#0没人，1方块，2梅花，3红桃，4黑桃，5双方块，。。。9小王，10大王
         res['trumpholder']=game_data[room]['trumpholder']            
         res['wait_time']=-1#不是发牌结束时候叫主等待时间
-        res['change']=game_data[room]['playerinformation'][name][2]#牌是否更改了
         if game_data[room]['state']!=0:#非等待准备
             after_time=time.time()-game_data[room]['begin_time']
             if game_data[room]['state']==1:
-                res['change']=True#摸牌时候肯定牌改变了
+                game_data[room]['playerinformation'][name][2]=True#牌是否更改了#摸牌时候肯定牌改变了
                 if after_time<allocate_time:
                     b=(game_data[room]['playerinformation'][name][0])*25
                     c=int(after_time/allocate_time*25)
-                    game_data[room]['playercard'][name]=sorted(poker[b:b+c],key=sort_card,reverse=True)
+                    game_data[room]['playercard'][name]=poker[b:b+c]
                 else:#第一次发完
                     if after_time<allocate_time+wait_time:
                         res['wait_time']=allocate_time+wait_time-after_time
@@ -152,27 +148,33 @@ def requestdata(request):
                             game_data[room]['banker']=game_data[room]['trumpholder']
                         for i in game_data[room]['player']:
                             begin=game_data[room]['playerinformation'][i][0]*25
-                            game_data[room]['playercard'][i]=sorted(poker[begin:begin+25],key=sort_card,reverse=True)
+                            game_data[room]['playercard'][i]=poker[begin:begin+25]
+                            game_data[room]['playerinformation'][i][2]=True#将所有人牌补齐，并且都改变了牌
                         #庄家取底    
-                        print(game_data[room]['banker'])
-                        game_data[room]['playercard'][game_data[room]['banker']]=sorted(poker[100:108]+game_data[room]['playercard'][game_data[room]['banker']],key=sort_card,reverse=True)
-                        
+                        game_data[room]['playercard'][game_data[room]['banker']]=poker[100:108]+game_data[room]['playercard'][game_data[room]['banker']]
+                        game_data[room]['playerinformation'][game_data[room]['banker']][2]=True#庄家摸底了，肯定牌改了
             # elif game_data[room]['state']==2:
             #     a=1
             else:
                 # if len(game_data[room]['playercard'][name])!=25:
-                #     print('error1')
                 pass
                 # else:
                 #     game_data[room]['playercard'][i]=sorted(game_data[room]['playercard'][],key=sort_card,reverse=True)
-            res['card']=game_data[room]['playercard'][name]
+            
+        if game_data[room]['playerinformation'][name][2]:#牌更改了
+            res['change']=True
+            game_data[room]['playerinformation'][name][2]=False#读完后就没改了
+            game_data[room]['playercard'][name]=sorted(game_data[room]['playercard'][name],key=sort_card,reverse=True)#理一下牌
+        else:
+            res['change']=False
+        res['card']=game_data[room]['playercard'][name]
         locker.release()
         ans=json.dumps(res)
-        # print(ans)
         return HttpResponse(ans)
 def ready(request):
     global game_data
     global poker
+    global locker
     name=request.GET["name"]
     room=request.GET["room"]
     def test_begin_game():
@@ -199,29 +201,33 @@ def ready(request):
         game_data[room]['nowlevel']=set_trump
         game_data[room]['trump']=0
         game_data[room]['trumpholder']=''
+    locker.acquire()
     if request.GET["action"]=='ready':
         game_data[room]['playerinformation'][name][1]=True
         if game_data[room]['state']==0:
             test_begin_game()
-        return HttpResponse("")
     elif request.GET["action"]=='unready':
         game_data[room]['playerinformation'][name][1]=False
-        return HttpResponse("")
+    locker.release()
+    return HttpResponse("")
 def calltrump(request):
     global game_data
     global poker
+    global locker
     name=request.GET["name"]
     room=request.GET["room"]
+    locker.acquire()
     trump=int(request.GET["trump"])
     now_trump=game_data[room]['trump']
-    # print(trump)
-    # print(now_trump)
     if  trump<9 and now_trump!=0 and int((trump-1)/4)<=int((now_trump-1)/4):#被别人先叫了
-        return HttpResponse("")
+        pass
     else:
         game_data[room]['trump']=trump
         game_data[room]['trumpholder']=name
-        return HttpResponse("")
+        for user_name in game_data[room]['player']:
+            game_data[room]['playerinformation'][user_name][2]=True
+    locker.release()
+    return HttpResponse("")
 def reallocate(request):
     global game_data
     global poker
@@ -252,8 +258,27 @@ def reallocate(request):
         game_data[room]['trump']=0
         game_data[room]['trumpholder']=''
     test_begin_game()
+    return HttpResponse("")
 def testgamehtml(request):
     return render(request,'game.html',{'name':"Yuri",'room':"1023"})
+def maidi(request):
+    global game_data
+    global poker
+    global locker
+    locker.acquire()
+    name=request.GET["name"]
+    room=request.GET["room"]
+    di_card=request.GET["di_card"].split(',')
+    game_data[room]['dicard']=di_card
+    game_data[room]['state']=3#开始打牌
+    for card_name in di_card:
+        if card_name in game_data[room]['playercard'][name]:
+            game_data[room]['playercard'][name].remove(card_name)
+        else:
+            print('error')
+    game_data[room]['playerinformation'][name][2]=True
+    locker.release()
+    return HttpResponse("")
 def record_poker(poker):
     if activate_mysql:
         conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password="lPVVX9pMskl6Vzoj",database="shengji")
