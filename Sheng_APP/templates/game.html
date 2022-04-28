@@ -15,18 +15,30 @@
 	<body>
         <div id="top">
             <div id="left" class='leftside'>
+                <div>
+                    <font size="5" style="color:#00a6ff" >昵称:</font>
+                    <font size="5" style="color:#ffff41"  id='user_name' >{{name}}</font>
+                    <font size="5" style="color:#00a6ff" >房间:</font>
+                    <font size="5" style="color:#ffff41"  id='room' >{{room}}</font>
+                    <font size="5" style="color:#00a6ff" >状态:</font>
+                    <font size="5" style="color:#ffff41"  id='self_ready' >未准备</font>
+                </div>
                 <div >
-                <font size="5" style="color:#00a6ff" >name:</font>
-                <font size="5" style="color:#ffff41"  id='user_name' >{{name}}</font>
-                <font size="5" style="color:#00a6ff" >room:</font>
-                <font size="5" style="color:#ffff41"  id='room' >{{room}}</font>
-                <font size="5" style="color:#00a6ff" >state:</font>
-                <font size="5" style="color:#ffff41"  id='self_ready' >未准备</font>
+                    <font size="5" style="color:#00a6ff" >现在打:</font>
+                    <font size="5" style="color:#ffff41"  id='now_game_level' ></font>
+                    <font size="5" style="color:#00a6ff" >&emsp;庄家:</font>
+                    <font size="5" style="color:#ffff41"  id='banker' ></font>
+                </div>
+                <div >
+                    <font size="5" style="color:#00a6ff" >得分:</font>
+                    <font size="5" style="color:#ffff41"  id='score'></font>
+                </div>
+                <div id="score_card">
                 </div>
             </div>
             <div id="right" class='rightside'>
                 <div id="game_level">
-                <font size="5" style="color:#41ffe3">现在打:</font>
+                <font size="5" style="color:#41ffe3">比分:</font>
                 <font size="5" style="color:red"  id="our_level">A </font>
                 <font size="5" style="color:#41ffe3" >: </font>
                 <font size="5" style="color:red" id="rival_level">2</font>
@@ -125,7 +137,7 @@
                     <button type="button" class="btn btn-default navbar-btn" style="text-align:center;width: 70px;">上一轮</button>
                 </div>
                 <div>
-                    <button type="button" class="btn btn-default navbar-btn" style="text-align:center;width: 70px;">底牌</button>
+                    <button type="button" class="btn btn-default navbar-btn" style="text-align:center;width: 70px;"  onclick="di_pai()">底牌</button>
                 </div>
                 <div>
                     <button type="button" class="btn btn-default navbar-btn" style="text-align:center;width: 70px;" onclick="reallocate()">重新发牌</button>

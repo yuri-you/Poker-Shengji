@@ -5,6 +5,7 @@ var game_data_mycard=[]
 var game_data_trumpcard=[]
 var game_data_nowtrump=0
 var game_data_state
+var center_card_type//0是空，1是底牌，2是上一轮
 var di_card=[]
 var is_up=Array(25).fill(false);
 function update_message(){
@@ -23,6 +24,14 @@ function update_message(){
             game_data_state=res.state
             $("#our_level").text(res.level[id%2]);
             $("#rival_level").text(res.level[(id+1)%2]);
+            switch(res.nowlevel){
+                case 14:$("#now_game_level").text('A');break;
+                case 13:$("#now_game_level").text('K');break;
+                case 12:$("#now_game_level").text('Q');break;
+                case 11:$("#now_game_level").text('J');break;
+                default:$("#now_game_level").text(res.nowlevel);
+            }
+            if(res.banker!=-1)$("#banker").text(res.banker)
             game_data_nowtrump=res.trump
             switch(res.trump){
                 case 0:$("#trump").text("");break;
@@ -68,7 +77,7 @@ function update_message(){
             $('#rival2_card').empty();
             $('#partner_card').empty();
             $('#rival1_card').empty();
-            $('#di_card').empty();
+            // $('#di_card').empty();
             if(res.wait_time!=-1){
                 $('#di_card').text(parseInt(res.wait_time))
                 $('#di_card').css("color",'yellow')
@@ -76,9 +85,11 @@ function update_message(){
                 $('#di_card').addClass("img490")
             }
             if(res.state==0){
+                $('#zhunbei').removeClass('hide')
                 update_message_state0(res)
             }
             else{
+                $('#zhunbei').addClass('hide')
                 if(res.change||game_data_mycard.length!=res.card.length){
                     $("#my_card").empty();
                     game_data_mycard=res.card
@@ -159,6 +170,8 @@ function update_message_state1(res){
     $("#rival2_ready").text("")
     $("#rival1_ready").text("")
     $("#partner_ready").text("")
+    $("#score").text("")
+    $("#score_card").empty()
     if(res.state==1){
         $("#self_ready").text("叫主阶段")
         var tmp_name=$("#user_name").text()
@@ -297,6 +310,7 @@ function update_message_state1(res){
 }
 function update_message_state2(res){
     if(res.state==2){
+        $('#di_card').empty();
         $("#self_ready").text("埋底阶段")
         var tmp_name=$("#user_name").text()
         var id=res.playerinformation[tmp_name][0]
@@ -332,6 +346,14 @@ function update_message_state3(res){
         $("#play_card").removeClass("hide")
         $("#play_card_button").text("出牌")
         $("#play_card_button").addClass("disabled")
+        $("#score").text(res.score)
+        for(var k=0;k<res.score_card.length;++k){
+            var t=document.createElement("img");
+            t.src="/static/img/poker/"+res.score_card[k]+".jpg";
+            $(t).addClass("mycard")
+            $(t).addClass("img"+(k+1)+'0')
+            $("#score_card").append(t)
+        }
     }
     else{
         alert("state error")
@@ -389,13 +411,16 @@ function up_card(self){
 }
 function check_legal(){
     if(game_data_state==2){
-        console.log($(".up").length)
+        // console.log($(".up").length)
         if($(".up").length==8){
             $("#play_card_button").removeClass("disabled")
         }
         else{
             $("#play_card_button").addClass("disabled")
         }
+    }
+    else if(game_data_state==3){
+        $("#play_card_button").removeClass("disabled")
     }
 }
 function recoginze_trump(card){
@@ -485,5 +510,46 @@ function play_card(self){
                 di_card:di_card.join(',')
             },
             dataType:"JSON"})
+    }
+    else if(game_data_state==3){//出牌
+        var show_card=Array()
+        $('.up').each(function (index, domEle) {
+            // index就是索引值
+            var str=domEle.src
+            show_card.push(str.substr(str.lastIndexOf("/") + 1,str.lastIndexOf(".")-str.lastIndexOf("/")-1))
+        });
+        $.ajax({
+            url:"/show_card",
+            type:"get",
+            data:{
+                name:$("#user_name").text(),
+                room:$("#room").text(),
+                show_card:show_card.join(',')
+            },
+            dataType:"JSON"})
+    }
+}
+function di_pai(){
+    if(game_data_state<=2)return;
+    if($('#banker').text()!=$("#user_name").text())return;
+    // console.log($('#di_card').text()!='')
+    if(center_card_type==2){
+        $('#di_card').html("")
+        center_card_type=0
+    }
+    else{
+        $("#di_card").removeClass()
+        for(var i=0;i<8;++i){
+            var f=document.createElement("img");
+            f.src='/static/img/poker/'+di_card[i]+'.jpg'
+            $(f).addClass('card_figure')
+            var classstring
+            if(i<6)classstring='img4'+(i+4)+'0'
+            else classstring='img5'+(i-6)+'0'
+            console.log(classstring)
+            $(f).addClass(classstring)
+            $("#di_card").append(f)
+        }
+        center_card_type=2
     }
 }

@@ -1,6 +1,6 @@
 from http.client import HTTPResponse
 from django.shortcuts import render,HttpResponse
-import os,random,json,pymysql,time,datetime,threading
+import os,random,json,pymysql,time,datetime,threading,copy
 locker=threading.Lock()
 test_number=1
 allocate_time=3
@@ -129,6 +129,7 @@ def requestdata(request):
         res['trump']=game_data[room]['trump']#0没人，1方块，2梅花，3红桃，4黑桃，5双方块，。。。9小王，10大王
         res['trumpholder']=game_data[room]['trumpholder']            
         res['wait_time']=-1#不是发牌结束时候叫主等待时间
+        res['banker']=game_data[room]['banker']
         if game_data[room]['state']!=0:#非等待准备
             after_time=time.time()-game_data[room]['begin_time']
             if game_data[room]['state']==1:
@@ -153,14 +154,11 @@ def requestdata(request):
                         #庄家取底    
                         game_data[room]['playercard'][game_data[room]['banker']]=poker[100:108]+game_data[room]['playercard'][game_data[room]['banker']]
                         game_data[room]['playerinformation'][game_data[room]['banker']][2]=True#庄家摸底了，肯定牌改了
-            # elif game_data[room]['state']==2:
-            #     a=1
-            else:
-                # if len(game_data[room]['playercard'][name])!=25:
+            elif game_data[room]['state']==2:
                 pass
-                # else:
-                #     game_data[room]['playercard'][i]=sorted(game_data[room]['playercard'][],key=sort_card,reverse=True)
-            
+            elif game_data[room]['state']==3:
+                res['score']=game_data[room]['score']
+                res['score_card']=game_data[room]['score_card']
         if game_data[room]['playerinformation'][name][2]:#牌更改了
             res['change']=True
             game_data[room]['playerinformation'][name][2]=False#读完后就没改了
@@ -270,6 +268,12 @@ def maidi(request):
     room=request.GET["room"]
     di_card=request.GET["di_card"].split(',')
     game_data[room]['dicard']=di_card
+    game_data[room]['score']=0
+    game_data[room]['score_card']=['5H','TD']
+    game_data[room]['turn']=name
+    game_data[room]['begin']=game_data[room]['playerinformation'][name][0]
+    game_data[room]['last_card']=[[],[],[],[]]
+    game_data[room]['tmp_card']=[[],[],[],[]]
     game_data[room]['state']=3#开始打牌
     for card_name in di_card:
         if card_name in game_data[room]['playercard'][name]:
@@ -279,6 +283,48 @@ def maidi(request):
     game_data[room]['playerinformation'][name][2]=True
     locker.release()
     return HttpResponse("")
+def check_big():#判断谁家的牌最大,并且把分加上去
+    #unfinshed
+    return 0
+def finish_game(di_owner):#结束一局，di_owner是最后一轮谁大
+    #unfinshed
+    return
+def show_card(request):
+    global game_data
+    global poker
+    name=request.GET["name"]
+    room=request.GET["room"]
+    show_card=request.GET['show_card'].split(',')
+    tmp_id=game_data[room]['playerinformation'][name][0]
+    res=dict()
+    if game_data[room]['player'][game_data[room]['begin']]==name:#第一个人出牌
+        res["legal"],res['force_card']=check_first_show_card_legal(show_card)
+        if not res["legal"]:
+            ans=json.dumps(res)
+            return HttpResponse(ans)
+        game_data[room]['cardtype']=card_type_judgement(show_card)
+    game_data[room]['tmp_card'][tmp_id]=copy.copy(show_card)
+    for card in show_card:
+        game_data[room]['playercard'][name].remove(card)
+    game_data[room]['playerinformation'][name][2]=True #修改过牌
+    if game_data[room]['begin']==(tmp_id+1)%4:#最后一个人出牌
+        big_id=check_big()
+        if len(game_data[room]['playercard'])==0:#牌打完了
+            finish_game(big_id)
+        else:
+            game_data[room]['last_card']=game_data['tmp_card']
+            game_data[room]['tmp']=[[],[],[],[]]
+            game_data[room]['turn']=game_data[room]['player'][big_id]
+            game_data[room]['begin']=big_id
+    else:
+        game_data[room]['turn']=game_data[room]['player'][(tmp_id+1)%4]
+    return HttpResponse("")
+def check_first_show_card_legal(show_card:list):#->bool,list (甩牌是否合法，强制要求出)
+    #unfinshed
+    return True,[]
+def card_type_judgement(show_card:list):
+    #unfinshed
+    return []
 def record_poker(poker):
     if activate_mysql:
         conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password="lPVVX9pMskl6Vzoj",database="shengji")
