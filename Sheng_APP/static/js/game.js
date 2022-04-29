@@ -6,6 +6,11 @@ var game_data_trumpcard=[]
 var game_data_nowtrump=0
 var game_data_state
 var center_card_type//0是空，1是底牌，2是上一轮
+var begin_player
+var turn_player
+var last_card_exist_time=5
+var last_card_show_second
+var last_card_show=false
 var di_card=[]
 var is_up=Array(25).fill(false);
 function update_message(){
@@ -341,18 +346,62 @@ function update_message_state2(res){
     }
 }
 function update_message_state3(res){
+    var tmp_name=$("#user_name").text()
+    var id=res.playerinformation[tmp_name][0]
     if(res.state==3){
         $("#self_ready").text("出牌阶段")
         $("#play_card").removeClass("hide")
         $("#play_card_button").text("出牌")
-        $("#play_card_button").addClass("disabled")
         $("#score").text(res.score)
-        for(var k=0;k<res.score_card.length;++k){
+        begin_player=res.player[res.begin]
+        turn_player=res.turn
+        for(var k=0;k<res.score_card.length;++k){//分牌
             var t=document.createElement("img");
             t.src="/static/img/poker/"+res.score_card[k]+".jpg";
             $(t).addClass("mycard")
             $(t).addClass("img"+(k+1)+'0')
             $("#score_card").append(t)
+        }
+        if(last_card_show&&(last_card_show_second+60-(new Date().getSeconds()))%60<last_card_exist_time){
+           //小于上一轮牌存在时间，不修改 
+        }
+        else{
+            //自己出的牌
+            for(var k=0;k<res.tmp_card[id].length;++k){
+                var t=document.createElement("img");
+                t.src="/static/img/poker/"+res.tmp_card[id][k]+".jpg";
+                var str="img"+(48-parseInt(res.tmp_card[id].length/2)+k)+'0'
+                $(t).addClass('card_figure')
+                $(t).addClass(str);
+                $("#out_card").append(t)
+            }
+            //下家出的牌
+            for(var k=0;k<res.tmp_card[(id+1)%4].length;++k){
+                var t=document.createElement("img");
+                t.src="/static/img/poker/"+res.tmp_card[(id+1)%4][k]+".jpg";
+                var str="img"+(85-res.tmp_card[(id+1)%4].length+k)+'0'
+                $(t).addClass('card_figure')
+                $(t).addClass(str);
+                $("#rival2_card").append(t)
+            }
+            //对家出的牌
+            for(var k=0;k<res.tmp_card[(id+2)%4].length;++k){
+                var t=document.createElement("img");
+                t.src="/static/img/poker/"+res.tmp_card[(id+2)%4][k]+".jpg";
+                var str="img"+(48-parseInt(res.tmp_card[(id+2)%4].length/2)+k)+'0'
+                $(t).addClass('card_figure')
+                $(t).addClass(str);
+                $("#partner_card").append(t)
+            }
+            //上家出的牌
+            for(var k=0;k<res.tmp_card[(id+3)%4].length;++k){
+                var t=document.createElement("img");
+                t.src="/static/img/poker/"+res.tmp_card[(id+3)%4][k]+".jpg";
+                var str="img"+(16+k)+'0'
+                $(t).addClass('card_figure')
+                $(t).addClass(str);
+                $("#rival1_card").append(t)
+            }
         }
     }
     else{
@@ -420,7 +469,56 @@ function check_legal(){
         }
     }
     else if(game_data_state==3){
-        $("#play_card_button").removeClass("disabled")
+        if(turn_player!=$("#user_name").text()){//不是自己出牌
+            $("#play_card_button").addClass("disabled")
+            return
+        }
+        var show_card=Array()
+        $('.up').each(function (index, domEle) {
+            // index就是索引值
+            var str=domEle.src
+            show_card.push(str.substr(str.lastIndexOf("/") + 1,str.lastIndexOf(".")-str.lastIndexOf("/")-1))
+        });
+        if(begin_player==$("#user_name").text()){
+            //第一手出牌，只要判断是不是出的同一类花色的牌，甩牌失败后端判断
+            if(show_card.length==0){
+                $("#play_card_button").addClass("disabled")
+                // return
+            }
+            else{
+                var color=Get_color_id(show_card[0])
+                var same=true
+                for(var i=1;i<show_card.length;++i){
+                    if(color!=Get_color_id(show_card[i])){
+                        same=false
+                        break
+                    }
+                }
+                if(same){
+                    $("#play_card_button").removeClass("disabled")
+                }
+                else{
+                    $("#play_card_button").addClass("disabled")
+                }
+            }
+        }
+        else{
+            //跟牌，得符合规则
+            $("#play_card_button").removeClass("disabled")
+        }
+    }
+}
+function Get_color_id(card){
+    if(card[0]=='j'||card[0]=='b'||card[0]==$("#now_game_level").text()){//主牌
+        if(game_data_nowtrump>=9){
+            return 5
+        }
+        else{
+            return (game_data_nowtrump-1)%4+1 //值为4,8时候(即黑桃）得到4，而不是0
+        }
+    }
+    else{
+        return color_to_int(card[1])
     }
 }
 function recoginze_trump(card){
@@ -510,6 +608,7 @@ function play_card(self){
                 di_card:di_card.join(',')
             },
             dataType:"JSON"})
+        $("#play_card_button").addClass("disabled")
     }
     else if(game_data_state==3){//出牌
         var show_card=Array()
@@ -526,7 +625,23 @@ function play_card(self){
                 room:$("#room").text(),
                 show_card:show_card.join(',')
             },
-            dataType:"JSON"})
+            dataType:"JSON",
+            success:function(res){
+                if(!res.legal){
+                    $.ajax({
+                        url:"/show_card",
+                        type:"get",
+                        data:{
+                            name:$("#user_name").text(),
+                            room:$("#room").text(),
+                            show_card:res.force_card.join(',')
+                        },
+                        dataType:"JSON"
+                    })
+                }
+            }
+        })
+        $(self).addClass("disabled")
     }
 }
 function di_pai(){

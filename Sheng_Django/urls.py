@@ -26,4 +26,5 @@ urlpatterns = [
     path("calltrump/",views.calltrump),
     path("reallocate/",views.reallocate),
     path("maidi/",views.maidi),
+    path("show_card/",views.show_card),
 ]

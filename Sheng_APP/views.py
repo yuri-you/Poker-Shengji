@@ -2,11 +2,14 @@ from http.client import HTTPResponse
 from django.shortcuts import render,HttpResponse
 import os,random,json,pymysql,time,datetime,threading,copy
 locker=threading.Lock()
-test_number=1
-allocate_time=3
+test_number=4
+allocate_time=10
 wait_time=5
 activate_mysql=False
-set_trump=13
+set_trump=2
+keep_time=10
+keep_begin_time=0
+_is_keep=-1#-1代表没有延迟需求，其余代表设置的begin_id
 random_card=True
 cardtime="2022-04-23 02:49:00"
 game_data=dict()
@@ -117,10 +120,18 @@ def requestdata(request):
             color_level=3-(trumpcolor+4-color)%4
             if number>game_data[room]['nowlevel']:card_number=number-2
             else: card_number=number-1
-            return color_level*12+card_number
+            return color_level*12+card_number    
     if request.GET["action"]=="information":
         locker.acquire()
         res=dict()
+        global _is_keep
+        if _is_keep!=-1 and keep_begin_time+keep_time<time.time():#更新到下一轮中
+            game_data[room]['last_card']=game_data[room]['tmp_card']
+            s=keep_begin_time+keep_time-time.time()
+            game_data[room]['tmp_card']=[[],[],[],[]]
+            game_data[room]['turn']=game_data[room]['player'][_is_keep]
+            game_data[room]['begin']=_is_keep
+            _is_keep=-1
         res['player']=game_data[room]['player']
         res['playerinformation']=game_data[room]['playerinformation']
         res['level']=game_data[room]['level']
@@ -141,6 +152,8 @@ def requestdata(request):
                 else:#第一次发完
                     if after_time<allocate_time+wait_time:
                         res['wait_time']=allocate_time+wait_time-after_time
+                        b=(game_data[room]['playerinformation'][name][0])*25
+                        game_data[room]['playercard'][name]=poker[b:b+25]
                     else:
                         game_data[room]['state']=2
                         if game_data[room]['trump']==0:#无人叫庄
@@ -159,6 +172,10 @@ def requestdata(request):
             elif game_data[room]['state']==3:
                 res['score']=game_data[room]['score']
                 res['score_card']=game_data[room]['score_card']
+                res['begin']=game_data[room]['begin']
+                res['turn']=game_data[room]['turn']
+                res['tmp_card']=game_data[room]['tmp_card']
+                res['last_card']=game_data[room]['last_card']
         if game_data[room]['playerinformation'][name][2]:#牌更改了
             res['change']=True
             game_data[room]['playerinformation'][name][2]=False#读完后就没改了
@@ -302,7 +319,7 @@ def show_card(request):
         if not res["legal"]:
             ans=json.dumps(res)
             return HttpResponse(ans)
-        game_data[room]['cardtype']=card_type_judgement(show_card)
+        game_data[room]['cardtype']=card_type_judgement(show_card,room)
     game_data[room]['tmp_card'][tmp_id]=copy.copy(show_card)
     for card in show_card:
         game_data[room]['playercard'][name].remove(card)
@@ -312,18 +329,29 @@ def show_card(request):
         if len(game_data[room]['playercard'])==0:#牌打完了
             finish_game(big_id)
         else:
-            game_data[room]['last_card']=game_data['tmp_card']
-            game_data[room]['tmp']=[[],[],[],[]]
-            game_data[room]['turn']=game_data[room]['player'][big_id]
-            game_data[room]['begin']=big_id
+            global keep_begin_time
+            global _is_keep
+            keep_begin_time=time.time()
+            _is_keep=big_id
     else:
-        game_data[room]['turn']=game_data[room]['player'][(tmp_id+1)%4]
+        game_data[room]['turn']=game_data[room]['player'][(tmp_id+1)%test_number]
     return HttpResponse("")
 def check_first_show_card_legal(show_card:list):#->bool,list (甩牌是否合法，强制要求出)
     #unfinshed
     return True,[]
-def card_type_judgement(show_card:list):
+def card_type_judgement(show_card:list,room):
     #unfinshed
+    global game_data
+    global poker
+    pair_card=[]
+    single_card=[]
+    for i in show_card:
+        if len(single_card)==0 or single_card[-1]!=i:
+            single_card.append(i)
+        else:
+            single_card.pop(-1)
+            pair_card.append(i)
+    
     return []
 def record_poker(poker):
     if activate_mysql:
