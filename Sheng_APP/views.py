@@ -2,8 +2,8 @@ from http.client import HTTPResponse
 from django.shortcuts import render,HttpResponse
 import os,random,json,pymysql,time,datetime,threading,copy
 locker=threading.Lock()
-test_number=4
-allocate_time=10
+test_number=1
+allocate_time=2
 wait_time=5
 activate_mysql=False
 set_trump=2
@@ -35,6 +35,21 @@ poker.append("joker")
 poker.append("bigjoker")
 poker.append("joker") 
 poker.append("bigjoker")
+def color_to_int(_color:str):
+    if _color=='S':return 4
+    elif _color=='H':return 3
+    elif _color=='C':return 2
+    elif _color=="D":return 1
+    else:
+        raise "Input color error"
+def number_to_int(_number:str):
+    if _number=='A':return 14
+    elif _number=='K':return 13
+    elif _number=='Q':return 12
+    elif _number=='J':return 11
+    elif _number=='T':return 10
+    else:
+        return int(_number)
 # def requestpoke(request):
 #     global poker
 #     time=int(request.GET['n1'])
@@ -107,12 +122,13 @@ def requestdata(request):
         else: color=0
         if game_data[room]['trump']>=9:trumpcolor=0#无主
         else: trumpcolor=game_data[room]['trump']%4
-        if str1[0]=='K':number=13
-        elif str1[0]=='Q':number=12
-        elif str1[0]=='J':number=11
-        elif str1[0]=='T':number=10
-        elif str1[0]=='A':number=14
-        else:number=int(str1[0])
+        # if str1[0]=='K':number=13
+        # elif str1[0]=='Q':number=12
+        # elif str1[0]=='J':number=11
+        # elif str1[0]=='T':number=10
+        # elif str1[0]=='A':number=14
+        # else:number=int(str1[0])
+        number=number_to_int(str1[0])
         if number==game_data[room]['nowlevel']:#打的主，如打2的时候的2
             color_level=3-(trumpcolor+4-color)%4
             return 49+color_level
@@ -339,20 +355,81 @@ def show_card(request):
 def check_first_show_card_legal(show_card:list):#->bool,list (甩牌是否合法，强制要求出)
     #unfinshed
     return True,[]
-def card_type_judgement(show_card:list,room):
+def card_type_judgement(show_cards:list,room):
     #unfinshed
     global game_data
     global poker
-    pair_card=[]
-    single_card=[]
-    for i in show_card:
-        if len(single_card)==0 or single_card[-1]!=i:
-            single_card.append(i)
+    pair_cards=[]
+    single_cards=[]
+    now_level=game_data[room]['nowlevel']
+    trump=game_data[room]['trump']
+    if trump>=9:
+        trump=5
+    else:
+        trump=(trump-1)%4+1
+    #1方块，2草花，3红桃，4黑桃，5无主
+    def card_value(card:str):
+        if trump==5:#无主
+            if card[0]=='b':
+                return 2#大王
+            elif card[0]=='j':
+                return 1#小王
+            elif number_to_int(card[0])==now_level:#硬主
+                return 0#全是副主
+            else:
+                tmp_type=color_to_int(card[1])#非硬主
+                card_value=number_to_int(card[0])
+                if card_value>now_level:card_value-=1#从2到13 （会越过打的那一集）
+                return card_value
+        else:#非无主
+            if card[0]=='b':
+                return 17#大王
+            elif card[0]=='j':
+                return 16#小王
+            elif number_to_int(card[0])==now_level:#硬主
+                if trump==color_to_int(card[1]):
+                    return 15#正主
+                else:
+                    return 14#副主
+            else:
+                tmp_type=color_to_int(card[1])#非硬主
+                card_value=number_to_int(card[0])
+                if card_value>now_level:card_value-=1#从2到13 （会越过打的那一集）
+                return card_value
+    def longest_card(pair_cards):
+        l=len(pair_cards)
+        longest=0
+        for i in range(l):
+            continuous=0
+            for j in range(l-1-i):
+                if pair_cards[i+j]-pair_cards[i+j+1]!=1:
+                    break
+                else:
+                    continuous+=1
+            if continuous+1>longest:
+                longest=continuous+1
+                longest_start=pair_cards[i]
+            if l-1-i<=longest:
+                break
+        for i in range(longest):
+            pair_cards.remove(longest_start-i)
+        return longest
+    for i in show_cards:
+        if len(single_cards)==0 or single_cards[-1]!=i:
+            single_cards.append(i)
         else:
-            single_card.pop(-1)
-            pair_card.append(i)
-    
-    return []
+            single_cards.pop(-1)
+            pair_cards.append(card_value(i))
+    ans=[]
+    while pair_cards!=[]:
+        longest_type=longest_card(pair_cards)
+        if ans==[] or ans[-1][0]!=longest_type:
+            ans.append([longest_type,1])
+        else:
+            ans[-1][1]+=1
+    if len(single_cards)!=0:
+        ans.append([0,len(single_cards)])
+    return ans
 def record_poker(poker):
     if activate_mysql:
         conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password="lPVVX9pMskl6Vzoj",database="shengji")
