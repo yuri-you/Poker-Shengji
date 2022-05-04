@@ -1,9 +1,11 @@
 from http.client import HTTPResponse
 from django.shortcuts import render,HttpResponse
 import os,random,json,pymysql,time,datetime,threading,copy
+mysqlpasswords=["lPVVX9pMskl6Vzoj","MxH4cfJT6fft4iA5"]
+mysqlpassword=mysqlpasswords[1]
 locker=threading.Lock()
-test_number=1
-allocate_time=2
+test_number=4
+allocate_time=5
 wait_time=5
 activate_mysql=False
 set_trump=2
@@ -11,7 +13,7 @@ keep_time=10
 keep_begin_time=0
 _is_keep=-1#-1代表没有延迟需求，其余代表设置的begin_id
 random_card=True
-cardtime="2022-04-23 02:49:00"
+cardtime="2022-05-02 06:47:08"
 game_data=dict()
 poker=[]
 number=str()
@@ -40,6 +42,7 @@ def color_to_int(_color:str):
     elif _color=='H':return 3
     elif _color=='C':return 2
     elif _color=="D":return 1
+    # elif _color=='i' or _color=='o':return 5
     else:
         raise "Input color error"
 def number_to_int(_number:str):
@@ -96,6 +99,8 @@ def addroom(request):
         game_data[room]['state']=0#state 0未开始，1发牌，
         game_data[room]["banker"]=-1
         game_data[room]["firstgame"]=True
+        game_data[room]['check_big_mannual']=False
+        game_data[room]['withdraw']=True
     if name not in game_data[room]['player']:
         if len(game_data[room]['player'])==4:
             return render(request,"login.html",{'a':"房间满了,请换房间加入"})
@@ -143,11 +148,12 @@ def requestdata(request):
         global _is_keep
         if _is_keep!=-1 and keep_begin_time+keep_time<time.time():#更新到下一轮中
             game_data[room]['last_card']=game_data[room]['tmp_card']
-            s=keep_begin_time+keep_time-time.time()
+            # s=keep_begin_time+keep_time-time.time()
             game_data[room]['tmp_card']=[[],[],[],[]]
             game_data[room]['turn']=game_data[room]['player'][_is_keep]
             game_data[room]['begin']=_is_keep
             _is_keep=-1
+            game_data[room]['withdraw']#恢复撤回牌
         res['player']=game_data[room]['player']
         res['playerinformation']=game_data[room]['playerinformation']
         res['level']=game_data[room]['level']
@@ -157,6 +163,8 @@ def requestdata(request):
         res['trumpholder']=game_data[room]['trumpholder']            
         res['wait_time']=-1#不是发牌结束时候叫主等待时间
         res['banker']=game_data[room]['banker']
+        res['check_big_mannual']=game_data[room]['check_big_mannual']#需不需要人工判断大小
+        res['withdraw']=game_data[room]['withdraw']
         if game_data[room]['state']!=0:#非等待准备
             after_time=time.time()-game_data[room]['begin_time']
             if game_data[room]['state']==1:
@@ -190,6 +198,8 @@ def requestdata(request):
                 res['score_card']=game_data[room]['score_card']
                 res['begin']=game_data[room]['begin']
                 res['turn']=game_data[room]['turn']
+                # if game_data[room]['check_big_mannual']:#需要人工判断
+                #     res['turn']=""
                 res['tmp_card']=game_data[room]['tmp_card']
                 res['last_card']=game_data[room]['last_card']
         if game_data[room]['playerinformation'][name][2]:#牌更改了
@@ -218,7 +228,7 @@ def ready(request):
             random.shuffle(poker)
             record_poker(poker)
         else:
-            conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password="lPVVX9pMskl6Vzoj",database="shengji")
+            conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password=mysqlpassword,database="shengji")
             cursor=conn.cursor(cursor=pymysql.cursors.DictCursor)
             cursor.execute("use shengji;")
             instruction="select card_information from shengji where time=%(n1)s;"
@@ -274,7 +284,7 @@ def reallocate(request):
             random.shuffle(poker)
             record_poker(poker)
         else:
-            conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password="lPVVX9pMskl6Vzoj",database="shengji")
+            conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password=mysqlpassword,database="shengji")
             cursor=conn.cursor(cursor=pymysql.cursors.DictCursor)
             cursor.execute("use shengji;")
             instruction="select card_information from shengji where time=%(n1)s;"
@@ -316,41 +326,204 @@ def maidi(request):
     game_data[room]['playerinformation'][name][2]=True
     locker.release()
     return HttpResponse("")
-def check_big():#判断谁家的牌最大,并且把分加上去
-    #unfinshed
-    return 0
+def judge_card_color(choosen_card,trump,now_level):
+    if trump==5:#无主
+        if choosen_card[0]=='b' or choosen_card[0]=='j' or number_to_int(choosen_card[0])==now_level:
+            return 5#硬主是5
+        else:
+            return color_to_int(choosen_card[1])#副牌
+    else:
+        if choosen_card[0]=='b' or choosen_card[0]=='j' or number_to_int(choosen_card[0])==now_level:
+            return trump#硬主是当前主牌的花色
+        else:
+            return color_to_int(choosen_card[1])#副牌
+def check_big(room):#判断谁家的牌最大,并且把分加上去
+    global game_data
+    global poker
+    now_level=game_data[room]['nowlevel']
+    trump=game_data[room]['trump']
+    card_type=game_data[room]['cardtype']#(类型+花色)
+    tmp_cards=game_data[room]['tmp_card']
+    big_player_ids=list(range(4))
+    def card_value(card:str):
+        if trump==5:#无主
+            if card[0]=='b':
+                return 2#大王
+            elif card[0]=='j':
+                return 1#小王
+            elif number_to_int(card[0])==now_level:#硬主
+                return 0#全是副主
+            else:
+                tmp_type=color_to_int(card[1])#非硬主
+                card_value=number_to_int(card[0])
+                if card_value>now_level:card_value-=1#从2到13 （会越过打的那一集）
+                return card_value
+        else:#非无主
+            if card[0]=='b':
+                return 17#大王
+            elif card[0]=='j':
+                return 16#小王
+            elif number_to_int(card[0])==now_level:#硬主
+                if trump==color_to_int(card[1]):
+                    return 15#正主
+                else:
+                    return 14#副主
+            else:
+                tmp_type=color_to_int(card[1])#非硬主
+                card_value=number_to_int(card[0])
+                if card_value>now_level:card_value-=1#从2到13 （会越过打的那一集）
+                return card_value
+    if len(card_type[0])==1:#只有一类牌，后台直接判断
+        new_big_player_ids=[]
+        #第一轮筛，把所有牌不是同花色的给删了,以及非主非同颜色副牌删了，这必不可能是最大
+        for i in big_player_ids:
+            is_player_legal=True
+            player_card_type=-1
+            for card in tmp_cards[i]:
+                tmp_player_card_type=judge_card_color(card,trump,now_level)
+                if tmp_player_card_type!=trump and tmp_player_card_type!=card_type[1]:#既不是主，也不是选择的花色
+                    is_player_legal=False
+                    break
+                elif player_card_type!=-1 and player_card_type!=tmp_player_card_type:#和上一张不一样
+                    is_player_legal=False
+                    break
+                if player_card_type==-1:
+                    player_card_type=tmp_player_card_type
+            if is_player_legal:#不满足情况的就删了，满足的才加进去
+                new_big_player_ids.append(i)
+        #第一轮删结束，更新big_id集合
+        if len(new_big_player_ids)==1:#只剩一个了
+            return True,new_big_player_ids[0]
+        else:
+            big_player_ids=new_big_player_ids
+            new_big_player_ids=[]
+        #第二轮筛，把不满足牌类型的删了
+        if card_type[0][0][0]==0:#如果全是单牌
+            for i in big_player_ids:
+                if tmp_cards[i][0][1]=='i' or tmp_cards[i][0][1]=='o' or color_to_int(tmp_cards[i][0][1])==trump:
+                    is_card_trump=1#是主牌
+                else:
+                    is_card_trump=0#不是主牌
+                new_big_player_ids.append([i,is_card_trump,card_value(tmp_cards[i][0])])#该人id,是不是主牌,值
+        else:
+            for i in big_player_ids:
+                is_player_legal=True
+                for j in range(card_type[0][0][1]):#有几个一样的
+                    for k in range(card_type[0][0][0]):#该类长度，比如拖拉长度为2
+                        if tmp_cards[i][j*card_type[0][0][0]*2+2*k]!=tmp_cards[i][j*card_type[0][0][0]*2+2*k+1]:
+                            is_player_legal=False
+                            break
+                        if k!=0:#从第二个开始比较是否是连续的，即形成拖拉
+                            if card_value(tmp_cards[i][j*card_type[0][0][0]*2+2*k-2])-card_value(tmp_cards[i][j*card_type[0][0][0]*2+2*k])!=1:
+                                is_player_legal=False
+                                break
+                    if not is_player_legal:break
+                if is_player_legal:#不满足情况的就删了，满足的才加进去
+                    if tmp_cards[i][0][1]=='i' or tmp_cards[i][0][1]=='o' or color_to_int(tmp_cards[i][0][1])==trump:
+                        is_card_trump=1#是主牌
+                    else:
+                        is_card_trump=0#不是主牌
+                    new_big_player_ids.append([i,is_card_trump,card_value(tmp_cards[i][0])])
+        #第三轮筛选
+        ans_id=-1
+        ans_value=0
+        for i in new_big_player_ids:
+            tmp_value=100*i[1]+i[2]
+            if tmp_value>ans_value:
+                ans_id=i[0]
+                ans_value=tmp_value
+            elif tmp_value==ans_value:
+                begin_id=game_data[room]['begin']
+                if (i[0]+test_number-begin_id)%+test_number<(ans_id++test_number-begin_id)%+test_number:#先出
+                    ans_id=i[0]
+                    ans_value=tmp_value
+        return True,ans_id
+    else:
+        # game_data[room]['check_big_mannual']=True
+        return False,0#人工选
+
+        
+                
+def receive_check_big_mannual(request):
+    global game_data
+    global poker
+    global locker
+    locker.acquire()
+    room=request.GET["room"]
+    big_name=request.GET["big_name"]
+    big_id=game_data[room]["playerinformation"][big_name][0]
+    if len(game_data[room]['playercard'])==0:#牌打完了
+        finish_game(big_id)
+    else:
+        game_data[room]['last_card']=game_data[room]['tmp_card']
+        game_data[room]['tmp_card']=[[],[],[],[]]
+        game_data[room]['turn']=big_name
+        game_data[room]['begin']=big_id
+        game_data[room]['check_big_mannual']=False
+        game_data[room]['withdraw']=True
+    locker.release()
+    return HttpResponse("")
+def withdraw(request):
+    global game_data
+    global poker
+    global locker
+    locker.acquire()
+    name=request.GET["name"]
+    room=request.GET["room"]
+    tmp_id=game_data[room]['playerinformation'][name][0]
+    turn_id=game_data[room]['playerinformation'][game_data[room]['turn']][0]
+    if (tmp_id+1)%test_number==turn_id:
+        game_data[room]['turn']=name
+        for card in game_data[room]['tmp_card'][tmp_id]:
+            game_data[room]['playercard'][name].append(card)
+        game_data[room]['playerinformation'][name][2]=True #修改过牌
+        game_data[room]['tmp_card'][tmp_id]=[]
+    locker.release()
+    return HttpResponse("")
 def finish_game(di_owner):#结束一局，di_owner是最后一轮谁大
     #unfinshed
     return
 def show_card(request):
     global game_data
     global poker
+    global locker
+    locker.acquire()
     name=request.GET["name"]
     room=request.GET["room"]
+    if game_data[room]['turn']!=name:#不是自己出牌。比如和withdraw撞上了
+        locker.release()
+        return HttpResponse("")
     show_card=request.GET['show_card'].split(',')
     tmp_id=game_data[room]['playerinformation'][name][0]
     res=dict()
     if game_data[room]['player'][game_data[room]['begin']]==name:#第一个人出牌
-        res["legal"],res['force_card']=check_first_show_card_legal(show_card)
-        if not res["legal"]:
-            ans=json.dumps(res)
-            return HttpResponse(ans)
-        game_data[room]['cardtype']=card_type_judgement(show_card,room)
+        # res["legal"],res['force_card']=check_first_show_card_legal(show_card)
+        # if not res["legal"]:
+        #     ans=json.dumps(res)
+        #     return HttpResponse(ans)
+        
+        #目前做法是添加withdraw 功能
+        game_data[room]['cardtype']=card_type_judgement(show_card,room) #返回的是一个tuple
     game_data[room]['tmp_card'][tmp_id]=copy.copy(show_card)
     for card in show_card:
         game_data[room]['playercard'][name].remove(card)
     game_data[room]['playerinformation'][name][2]=True #修改过牌
-    if game_data[room]['begin']==(tmp_id+1)%4:#最后一个人出牌
-        big_id=check_big()
-        if len(game_data[room]['playercard'])==0:#牌打完了
-            finish_game(big_id)
-        else:
-            global keep_begin_time
-            global _is_keep
-            keep_begin_time=time.time()
-            _is_keep=big_id
+    if game_data[room]['begin']==(tmp_id+1)%test_number:#最后一个人出牌
+        game_data[room]['withdraw']=False#一轮打完了，ban掉撤回牌
+        is_now_check,big_id=check_big(room)
+        if is_now_check:#后台可以判断
+            if len(game_data[room]['playercard'])==0:#牌打完了
+                finish_game(big_id)
+            else:
+                global keep_begin_time
+                global _is_keep
+                keep_begin_time=time.time()
+                _is_keep=big_id
+        else:   
+            game_data[room]['check_big_mannual']=True
     else:
         game_data[room]['turn']=game_data[room]['player'][(tmp_id+1)%test_number]
+    locker.release()
     return HttpResponse("")
 def check_first_show_card_legal(show_card:list):#->bool,list (甩牌是否合法，强制要求出)
     #unfinshed
@@ -420,19 +593,21 @@ def card_type_judgement(show_cards:list,room):
         else:
             single_cards.pop(-1)
             pair_cards.append(card_value(i))
-    ans=[]
+    card_category=[]
     while pair_cards!=[]:
         longest_type=longest_card(pair_cards)
-        if ans==[] or ans[-1][0]!=longest_type:
-            ans.append([longest_type,1])
+        if card_category==[] or card_category[-1][0]!=longest_type:
+            card_category.append([longest_type,1])
         else:
-            ans[-1][1]+=1
+            card_category[-1][1]+=1
     if len(single_cards)!=0:
-        ans.append([0,len(single_cards)])
-    return ans
+        card_category.append([0,len(single_cards)])
+    #card_category是牌型
+    card_color=judge_card_color(show_cards[0],trump,now_level)
+    return (card_category,card_color)#先是牌型，后是花色
 def record_poker(poker):
     if activate_mysql:
-        conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password="lPVVX9pMskl6Vzoj",database="shengji")
+        conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password=mysqlpassword,database="shengji")
         cursor=conn.cursor(cursor=pymysql.cursors.DictCursor)
         cursor.execute("use shengji;")
         nowtime=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')

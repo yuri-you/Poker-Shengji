@@ -27,4 +27,6 @@ urlpatterns = [
     path("reallocate/",views.reallocate),
     path("maidi/",views.maidi),
     path("show_card/",views.show_card),
+    path("check_big_mannual/",views.receive_check_big_mannual),
+    path("withdraw/",views.withdraw),
 ]

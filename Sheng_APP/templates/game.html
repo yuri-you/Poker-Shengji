@@ -120,11 +120,18 @@
             <div style="position:fixed;bottom:0px;left:0%;border:0;padding:0;">
                 <div style="text-align:center;width: 70px;" id="play_card" class="hide">
                     <button type="button"  class="btn btn-default navbar-btn disabled" onclick="play_card(this)" id="play_card_button">出牌</button>
+                    <button type="button"  class="btn btn-default navbar-btn disabled" onclick="withdraw(this)" id="withdraw">撤回</button>
                 </div>
+                <div class="btn-group" role="group" aria-label="..." id='check_big_mannual'>
+                    <button type="button" class="btn btn-default" onclick="mannual_judge_big(this)"><font size="3" style="color:black" id="big0"></font></button>
+                    <button type="button" class="btn btn-default" onclick="mannual_judge_big(this)"><font size="3" style="color:black" id="big1"></font></button>
+                    <button type="button" class="btn btn-default" onclick="mannual_judge_big(this)"><font size="3" style="color:black" id="big2"></font></button>
+                    <button type="button" class="btn btn-default" onclick="mannual_judge_big(this)"><font size="3" style="color:black" id="big3"></font></button>
+                </div> 
                 <div class="btn-group" role="group" aria-label="..."  id="trump_color">
                     <button type="button" class="btn btn-default disabled" id="S_color" onclick="calltrump(this)"><font size="3" style="color:black" id="partner_name2">♠</font></button>
                     <button type="button" class="btn btn-default disabled" id="H_color" onclick="calltrump(this)"><font size="3" style="color:red" id="partner_name2">♥</font></button>
-                    <button type="button" class="btn btn-default disabled" id="C_color" onclick="calltrump(this)"><font size="3" style="color:#008B45" id="partner_name2">♣</font></button></button>
+                    <button type="button" class="btn btn-default disabled" id="C_color" onclick="calltrump(this)"><font size="3" style="color:#008B45" id="partner_name2">♣</font></button>
                     <button type="button" class="btn btn-default disabled" id="D_color" onclick="calltrump(this)"><font size="3" style="color:#00BFFF" id="partner_name2">◇</font></button>
                     <button type="button" class="btn btn-default disabled" id="NT" onclick="calltrump(this)"><font size="3" style="color:#696969" id="partner_name2">NT</font></button>
                 </div>

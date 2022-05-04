@@ -27,6 +27,15 @@ function update_message(){
             var tmp_name=$("#user_name").text()
             var id=res.playerinformation[tmp_name][0]
             game_data_state=res.state
+            if(res.check_big_mannual&&id==0){
+                $("#check_big_mannual").removeClass("hide")
+            }
+            else{
+                $("#check_big_mannual").addClass("hide")
+                for(var i=0;i<res.player.length;++i){
+                    $("#big"+i).text(res.player[i])
+                }
+            }
             $("#our_level").text(res.level[id%2]);
             $("#rival_level").text(res.level[(id+1)%2]);
             switch(res.nowlevel){
@@ -349,12 +358,31 @@ function update_message_state3(res){
     var tmp_name=$("#user_name").text()
     var id=res.playerinformation[tmp_name][0]
     if(res.state==3){
+        $("#trump_color").addClass("hide")
         $("#self_ready").text("出牌阶段")
         $("#play_card").removeClass("hide")
         $("#play_card_button").text("出牌")
         $("#score").text(res.score)
+        $('#rival2_ready').text("")
+        $('#rival1_ready').text("")
+        $('#partner_ready').text("")
+        if(res.withdraw&&(id+1)%res.player.length==res.playerinformation[res.turn][0]){
+            $("#withdraw").removeClass("disabled")
+        }
+        else{
+            $("#withdraw").addClass("disabled")
+        }
         begin_player=res.player[res.begin]
         turn_player=res.turn
+        var tmp_player_relatedname=''
+        switch(res.playerinformation[turn_player][0]){
+            case 1:tmp_player_relatedname='#rival2_ready';break;
+            case 2:tmp_player_relatedname='#partner_ready';break;
+            case 3:tmp_player_relatedname='#rival1_ready';break;
+        }
+        if(tmp_player_relatedname!=''){
+            $(tmp_player_relatedname).text("出牌中")
+        }
         for(var k=0;k<res.score_card.length;++k){//分牌
             var t=document.createElement("img");
             t.src="/static/img/poker/"+res.score_card[k]+".jpg";
@@ -504,7 +532,11 @@ function check_legal(){
         }
         else{
             //跟牌，得符合规则
-            $("#play_card_button").removeClass("disabled")
+            if(show_card.length==0){
+                $("#play_card_button").addClass("disabled")
+                // return
+            }
+            else $("#play_card_button").removeClass("disabled")
         }
     }
 }
@@ -644,6 +676,17 @@ function play_card(self){
         $(self).addClass("disabled")
     }
 }
+function mannual_judge_big(self){
+    $.ajax({
+        url:"/check_big_mannual",
+        type:"get",
+        data:{
+            room:$("#room").text(),
+            big_name:$(self).children().text()
+        },
+        dataType:"JSON"
+    })
+}
 function di_pai(){
     if(game_data_state<=2)return;
     if($('#banker').text()!=$("#user_name").text())return;
@@ -667,4 +710,16 @@ function di_pai(){
         }
         center_card_type=2
     }
+}
+function withdraw(self){
+    if($(self).hasClass("disabled"))return
+    $.ajax({
+        url:"/withdraw",
+        type:"get",
+        data:{
+            name:$("#user_name").text(),
+            room:$("#room").text(),
+        },
+        dataType:"JSON"
+    })
 }
