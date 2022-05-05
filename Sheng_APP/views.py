@@ -9,7 +9,7 @@ allocate_time=5
 wait_time=5
 activate_mysql=False
 set_trump=2
-keep_time=5
+keep_time=3
 keep_begin_time=0
 _is_keep=-1#-1代表没有延迟需求，其余代表设置的begin_id
 random_card=True
@@ -97,10 +97,13 @@ def addroom(request):
     if room not in game_data:
         game_data[room]={'player':[],'playerinformation':dict(),'level':[2,2],'playercard':dict(),'begin_time':0,'nowlevel':2,'trump':0,'trumpholder':''}
         game_data[room]['state']=0#state 0未开始，1发牌，
-        game_data[room]["banker"]=-1
+        game_data[room]['banker']=-1
         game_data[room]["firstgame"]=True
         game_data[room]['check_big_mannual']=False
         game_data[room]['withdraw']=False
+        game_data[room]['show_di']=False
+        game_data[room]['dicard']=[]
+        game_data[room]['nowlevel']=set_trump
     if name not in game_data[room]['player']:
         if len(game_data[room]['player'])==4:
             return render(request,"login.html",{'a':"房间满了,请换房间加入"})
@@ -147,6 +150,13 @@ def requestdata(request):
         res=dict()
         global _is_keep
         if _is_keep!=-1 and keep_begin_time+keep_time<time.time():#更新到下一轮中
+            if (_is_keep+game_data[room]['banker'])%2:#和庄家id不是同奇偶，闲家捡分
+                turn_cards=[]
+                for i in game_data[room]['tmp_card']:
+                    turn_cards+=i
+                mark,mark_card=count_mark(turn_cards)
+                game_data[room]['score']+=mark
+                game_data[room]['score_card']+=mark_card
             game_data[room]['last_card']=game_data[room]['tmp_card']
             # s=keep_begin_time+keep_time-time.time()
             game_data[room]['tmp_card']=[[],[],[],[]]
@@ -164,6 +174,8 @@ def requestdata(request):
         res['banker']=game_data[room]['banker']
         res['check_big_mannual']=game_data[room]['check_big_mannual']#需不需要人工判断大小
         res['withdraw']=game_data[room]['withdraw']
+        res['show_di']=game_data[room]['show_di']
+        res['di_card']=game_data[room]['dicard']
         if game_data[room]['state']!=0:#非等待准备
             after_time=time.time()-game_data[room]['begin_time']
             if game_data[room]['state']==1:
@@ -182,14 +194,16 @@ def requestdata(request):
                         if game_data[room]['trump']==0:#无人叫庄
                             game_data[room]['trump']=9#自动无主
                         if game_data[room]['firstgame']:#第一局游戏，抢庄
-                            game_data[room]['banker']=game_data[room]['trumpholder']
+                            game_data[room]['banker']=game_data[room]['playerinformation'][game_data[room]['trumpholder']][0]#存庄家id
+                            game_data[room]['firstgame']=False
                         for i in game_data[room]['player']:
                             begin=game_data[room]['playerinformation'][i][0]*25
                             game_data[room]['playercard'][i]=poker[begin:begin+25]
                             game_data[room]['playerinformation'][i][2]=True#将所有人牌补齐，并且都改变了牌
                         #庄家取底    
-                        game_data[room]['playercard'][game_data[room]['banker']]=poker[100:108]+game_data[room]['playercard'][game_data[room]['banker']]
-                        game_data[room]['playerinformation'][game_data[room]['banker']][2]=True#庄家摸底了，肯定牌改了
+                        banker_name=game_data[room]['player'][game_data[room]['banker']]
+                        game_data[room]['playercard'][banker_name]=poker[100:108]+game_data[room]['playercard'][banker_name]
+                        game_data[room]['playerinformation'][banker_name][2]=True#庄家摸底了，肯定牌改了
             elif game_data[room]['state']==2:
                 pass
             elif game_data[room]['state']==3:
@@ -239,7 +253,8 @@ def ready(request):
         #     game_data[room]['player']
         game_data[room]['begin_time']=time.time()
         game_data[room]['state']=1
-        game_data[room]['nowlevel']=set_trump
+        game_data[room]['show_di']=False
+        game_data[room]['dicard']=[]
         game_data[room]['trump']=0
         game_data[room]['trumpholder']=''
     locker.acquire()
@@ -312,7 +327,7 @@ def maidi(request):
     di_card=request.GET["di_card"].split(',')
     game_data[room]['dicard']=di_card
     game_data[room]['score']=0
-    game_data[room]['score_card']=['5H','TD']
+    game_data[room]['score_card']=[]
     game_data[room]['turn']=name
     game_data[room]['begin']=game_data[room]['playerinformation'][name][0]
     game_data[room]['last_card']=[[],[],[],[]]
@@ -453,9 +468,16 @@ def receive_check_big_mannual(request):
     room=request.GET["room"]
     big_name=request.GET["big_name"]
     big_id=game_data[room]["playerinformation"][big_name][0]
-    if len(game_data[room]['playercard'])==0:#牌打完了
-        finish_game(big_id)
+    if len(game_data[room]['playercard'][game_data[room]['player'][0]])==0:#牌打完了
+        finish_game(big_id,game_data[room]['cardtype'],room)
     else:
+        if (big_id+game_data[room]['banker'])%2:#和庄家id不是同奇偶，闲家捡分
+            turn_cards=[]
+            for i in game_data[room]['tmp_card']:
+                turn_cards+=i
+            mark,mark_card=count_mark(turn_cards)
+            game_data[room]['score']+=mark
+            game_data[room]['score_card']+=mark_card
         game_data[room]['last_card']=game_data[room]['tmp_card']
         game_data[room]['tmp_card']=[[],[],[],[]]
         game_data[room]['turn']=big_name
@@ -463,6 +485,20 @@ def receive_check_big_mannual(request):
         game_data[room]['check_big_mannual']=False
     locker.release()
     return HttpResponse("")
+def count_mark(cards:list):
+    ans=0
+    mark_cards=[]
+    for card in cards:
+        if card[0]=='5':
+            ans+=5
+            mark_cards.append(card)
+        elif card[0]=="T":
+            ans+=10
+            mark_cards.append(card)
+        elif card[0]=='K':
+            ans+=10
+            mark_cards.append(card)
+    return ans,mark_cards
 def withdraw(request):
     global game_data
     global poker
@@ -480,8 +516,29 @@ def withdraw(request):
         game_data[room]['tmp_card'][tmp_id]=[]
     locker.release()
     return HttpResponse("")
-def finish_game(di_owner):#结束一局，di_owner是最后一轮谁大
-    #unfinshed
+def finish_game(di_owner,last_card_type,room):#结束一局，di_owner是最后一轮谁大
+    global game_data
+    if (di_owner+game_data[room]['banker'])%2:#和庄家id不是同奇偶，闲家捡分
+        times=2**(last_card_type[0][0][0])
+        mark,mark_card=count_mark(game_data[room]['dicard'])
+        game_data[room]['score']+=times*mark
+    if game_data[room]['score']<80:#过牌
+        game_data[room]['banker']=(game_data[room]['banker']+2)%test_number
+        if game_data[room]['score']==0:#大光
+            game_data[room]['level'][(game_data[room]['banker'])%2]=(game_data[room]['level'][(game_data[room]['banker'])%2]+3-2)%13+2#超过14就取模
+        elif game_data[room]['score']<40:#小光
+            game_data[room]['level'][(game_data[room]['banker'])%2]=(game_data[room]['level'][(game_data[room]['banker'])%2]+2-2)%13+2#超过14就取模
+        else:#过牌
+            game_data[room]['level'][(game_data[room]['banker'])%2]=(game_data[room]['level'][(game_data[room]['banker'])%2]+1-2)%13+2#超过14就取模
+    else:
+        game_data[room]['banker']=(game_data[room]['banker']+1)%test_number
+        add_level=(game_data[room]['score']-80)//40
+        game_data[room]['level'][(game_data[room]['banker'])%2]=(game_data[room]['level'][(game_data[room]['banker'])%2]+add_level-2)%13+2#超过14就取模
+    game_data[room]['state']=0
+    game_data[room]['show_di']=True  
+    for name in game_data[room]['player']:
+        game_data[room]['playerinformation'][name][1]=False
+    game_data[room]['nowlevel']=game_data[room]['level'][game_data[room]['banker']%2]
     return
 def show_card(request):
     global game_data
@@ -513,8 +570,8 @@ def show_card(request):
         game_data[room]['withdraw']=False#一轮打完了，ban掉撤回牌
         is_now_check,big_id=check_big(room)
         if is_now_check:#后台可以判断
-            if len(game_data[room]['playercard'])==0:#牌打完了
-                finish_game(big_id)
+            if len(game_data[room]['playercard'][name])==0:#牌打完了
+                finish_game(big_id,game_data[room]['cardtype'],room)
             else:
                 global keep_begin_time
                 global _is_keep
@@ -527,12 +584,11 @@ def show_card(request):
     locker.release()
     return HttpResponse("")
 def check_first_show_card_legal(show_card:list):#->bool,list (甩牌是否合法，强制要求出)
-    #unfinshed
+    #unfinished
     return True,[]
 def card_type_judgement(show_cards:list,room):
-    #unfinshed
+    #unfinished
     global game_data
-    global poker
     pair_cards=[]
     single_cards=[]
     now_level=game_data[room]['nowlevel']
@@ -618,4 +674,31 @@ def record_poker(poker):
         instruction="insert shengji(time,card_information) values(%(n1)s,%(n2)s);"
         cursor.execute(instruction,{"n1":nowtime,"n2":card_information})
         conn.commit()
+def requestmodify(request):
+    room=request.GET['room']
+    return render(request,'modify.html',{'room':room})
+def level_legal(level):
+    if level=='A' or level=='K' or level=='Q' or level=='J' or level=='T':return True
+    elif number_to_int(level)>1 and number_to_int(level)<=10:#10写成T或者不写成都行
+        return True
+    else:return False
+def modifydata(request):
+    global game_data
+    global locker
+    locker.acquire()
+    room=request.GET['room']
+    is_modify=False
+    if request.GET['myscore']!='' and level_legal(request.GET['myscore']):
+        game_data[room]['level'][0]=number_to_int(request.GET['myscore'])
+        is_modify=True
+    if request.GET['rivalscore']!='' and level_legal(request.GET['rivalscore']):
+        game_data[room]['level'][1]=number_to_int(request.GET['rivalscore'])
+        is_modify=True
+    if request.GET['banker']!='' and request.GET['banker'] in game_data[room]['player']:
+        game_data[room]['banker']=game_data[room]['playerinformation'][request.GET['banker']][0]
+        is_modify=True
+    if is_modify:
+        game_data[room]['nowlevel']=game_data[room]['level'][game_data[room]['banker']%2]
+    locker.release()
+    return render(request,'close.html')
 # Create your views here.

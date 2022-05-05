@@ -29,4 +29,6 @@ urlpatterns = [
     path("show_card/",views.show_card),
     path("check_big_mannual/",views.receive_check_big_mannual),
     path("withdraw/",views.withdraw),
+    path('requestmodify/',views.requestmodify),
+    path('modifydata/',views.modifydata),
 ]

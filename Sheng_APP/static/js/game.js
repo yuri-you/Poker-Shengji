@@ -1,5 +1,5 @@
 alert("成功加入房间")
-setInterval("update_message()","200")
+setInterval("update_message()","300")
 // update_message()
 var game_data_mycard=[]
 var game_data_trumpcard=[]
@@ -27,18 +27,35 @@ function update_message(){
         success:function(res){
             var tmp_name=$("#user_name").text()
             var id=res.playerinformation[tmp_name][0]
+            if(id){
+                $("#modify_data").addClass('hide')
+            }
             game_data_state=res.state
             if(res.check_big_mannual&&id==0){
                 $("#check_big_mannual").removeClass("hide")
-            }
-            else{
-                $("#check_big_mannual").addClass("hide")
                 for(var i=0;i<res.player.length;++i){
                     $("#big"+i).text(res.player[i])
                 }
             }
-            $("#our_level").text(res.level[id%2]);
-            $("#rival_level").text(res.level[(id+1)%2]);
+            else{
+                $("#check_big_mannual").addClass("hide")
+            }
+            di_card=res.di_card
+            if(res.show_di){
+                $("#di_card").html("")
+                for(var i=0;i<8;++i){
+                    var f=document.createElement("img");
+                    f.src='/static/img/poker/'+di_card[i]+'.jpg'
+                    $(f).addClass('card_figure')
+                    var classstring
+                    if(i<6)classstring='img4'+(i+4)+'0'
+                    else classstring='img5'+(i-6)+'0'
+                    $(f).addClass(classstring)
+                    $("#di_card").append(f)
+                    console.log($("#di_card").children())
+                }
+                center_card_type=2
+            }
             switch(res.nowlevel){
                 case 14:$("#now_game_level").text('A');break;
                 case 13:$("#now_game_level").text('K');break;
@@ -46,7 +63,21 @@ function update_message(){
                 case 11:$("#now_game_level").text('J');break;
                 default:$("#now_game_level").text(res.nowlevel);
             }
-            if(res.banker!=-1)$("#banker").text(res.banker)
+            switch(res.level[id%2]){
+                case 14:$("#our_level").text('A');break;
+                case 13:$("#our_level").text('K');break;
+                case 12:$("#our_level").text('Q');break;
+                case 11:$("#our_level").text('J');break;
+                default:$("#our_level").text(res.level[id%2]);
+            }
+            switch(res.level[(id+1)%2]){
+                case 14:$("#rival_level").text('A');break;
+                case 13:$("#rival_level").text('K');break;
+                case 12:$("#rival_level").text('Q');break;
+                case 11:$("#rival_level").text('J');break;
+                default:$("#rival_level").text(res.level[(id+1)%2]);
+            }
+            if(res.banker!=-1)$("#banker").text(res.player[res.banker])
             game_data_nowtrump=res.trump
             switch(res.trump){
                 case 0:$("#trump").text("");break;
@@ -99,6 +130,9 @@ function update_message(){
                 $('#di_card').css("font-size",'30px')
                 $('#di_card').addClass("img490")
             }
+            else{
+                $('#di_card').removeClass("img490")
+            }
             if(res.state==0){
                 $('#zhunbei').removeClass('hide')
                 update_message_state0(res)
@@ -144,9 +178,11 @@ function update_message_state0(res){
         var id=res.playerinformation[tmp_name][0]
         if(res.playerinformation[tmp_name][1]){
             $("#self_ready").text("已准备")
+            $("#zhunbei").text("取消准备")
         }
         else{
             $("#self_ready").text("未准备")
+            $("#zhunbei").text("准备")
         }
         if((id+1)%4<res.player.length){
             $("#rival2_name").text(res.player[(id+1)%4])
@@ -187,6 +223,7 @@ function update_message_state1(res){
     $("#partner_ready").text("")
     $("#score").text("")
     $("#score_card").empty()
+    $('#trump_color').removeClass('hide')
     if(res.state==1){
         $("#self_ready").text("叫主阶段")
         var tmp_name=$("#user_name").text()
@@ -460,8 +497,6 @@ function self_ready(){
                 room:$("#room").text()
             },
             dataType:"JSON"})
-        $("#zhunbei").text("取消准备")
-        $("#self_ready").text("已准备")
     }
     else{
         $.ajax({
@@ -473,8 +508,6 @@ function self_ready(){
                 room:$("#room").text()
             },
             dataType:"JSON"})
-        $("#zhunbei").text("准备")
-        $("#self_ready").text("未准备")
     }
 }
 
@@ -629,10 +662,11 @@ function calltrump(self){
 function play_card(self){
     if($(self).hasClass("disabled"))return
     if(game_data_state==2){//埋牌
+        var tmp_di_card=Array()
         $('.up').each(function (index, domEle) {
             // index就是索引值
             var str=domEle.src
-            di_card.push(str.substr(str.lastIndexOf("/") + 1,str.lastIndexOf(".")-str.lastIndexOf("/")-1))
+            tmp_di_card.push(str.substr(str.lastIndexOf("/") + 1,str.lastIndexOf(".")-str.lastIndexOf("/")-1))
         });
         $.ajax({
             url:"/maidi",
@@ -640,7 +674,7 @@ function play_card(self){
             data:{
                 name:$("#user_name").text(),
                 room:$("#room").text(),
-                di_card:di_card.join(',')
+                di_card:tmp_di_card.join(',')
             },
             dataType:"JSON"})
         $("#play_card_button").addClass("disabled")
@@ -701,7 +735,7 @@ function di_pai(){
         center_card_type=0
     }
     else{
-        $("#di_card").removeClass()
+        $("#di_card").html("")
         for(var i=0;i<8;++i){
             var f=document.createElement("img");
             f.src='/static/img/poker/'+di_card[i]+'.jpg'
@@ -712,6 +746,7 @@ function di_pai(){
             console.log(classstring)
             $(f).addClass(classstring)
             $("#di_card").append(f)
+            console.log($("#di_card").children())
         }
         center_card_type=2
     }
@@ -727,4 +762,14 @@ function withdraw(self){
         },
         dataType:"JSON"
     })
+}
+function modify(){
+    if(game_data_state!=0){
+        alert("请在准备阶段再修改信息")
+        return
+    }
+    else{
+        var tempwindow=open('_blank');
+        tempwindow.location='/requestmodify?room='+$("#room").text();
+    }
 }

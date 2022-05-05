@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="author" content="Yuri">
+		<!-- <meta http-equiv="refresh" content="6;url=http://39.108.192.128/"> -->
+		<title>
+			修改牌局信息
+		</title>
+        <link rel="stylesheet" type="text/css" href="/static/plugins/bootstrap/bootstrap.css">
+	</head>
+	<body>
+        <div style="position:absolute;left:20%;margin:100px auto">
+            <div>
+                <font size="5" style="color:#00a6ff" >房间{{room}}信息修改</font>
+            </div>
+            <form action='/modifydata' method='get' id='table'>
+            </form>
+            <form action='/modifydata' method='get' id='table' onsubmit="window.opener=null;alert('修改成功');">
+                <p>比分:<input type="text" name="myscore">:<input type="text" name="rivalscore"></p>
+                <p>庄家:<input type="text" name="banker"></p>
+                <div style="display: none;"><input type="text" name="room" value={{room}}></div>
+                <input type="submit" class="btn btn-default navbar-btn" style="text-align:center;width: 70px;" value="修改信息" onClick='modify1(this)'>
+                {% comment %} <input type="submit"   value="Submit"  > {% endcomment %}
+            </form>
+        </div>
+	</body>
+    {% comment %} <script src="/static/plugins/jquery/jquery.js"></script>
+	<script type="text/javascript"> {% endcomment %}
+	</script>
+</html>
