@@ -10,6 +10,7 @@ var begin_player
 var turn_player
 var last_card_exist_time=5
 var last_card_show_second
+var legal_length
 var last_card_show=false
 var di_card=[]
 var is_up=Array(25).fill(false);
@@ -366,6 +367,7 @@ function update_message_state3(res){
         $('#rival2_ready').text("")
         $('#rival1_ready').text("")
         $('#partner_ready').text("")
+        legal_length=res.legal_length
         if(res.withdraw&&(id+1)%res.player.length==res.playerinformation[res.turn][0]){
             $("#withdraw").removeClass("disabled")
         }
@@ -375,7 +377,8 @@ function update_message_state3(res){
         begin_player=res.player[res.begin]
         turn_player=res.turn
         var tmp_player_relatedname=''
-        switch(res.playerinformation[turn_player][0]){
+        var difference=(res.playerinformation[turn_player][0]+res.player.length-id)%res.player.length
+        switch(difference){
             case 1:tmp_player_relatedname='#rival2_ready';break;
             case 2:tmp_player_relatedname='#partner_ready';break;
             case 3:tmp_player_relatedname='#rival1_ready';break;
@@ -531,8 +534,8 @@ function check_legal(){
             }
         }
         else{
-            //跟牌，得符合规则
-            if(show_card.length==0){
+            //跟牌，目前只判断数量是否符合
+            if(show_card.length!=legal_length){
                 $("#play_card_button").addClass("disabled")
                 // return
             }
@@ -677,6 +680,8 @@ function play_card(self){
     }
 }
 function mannual_judge_big(self){
+    var t=confirm("确认是"+$(self).children().text()+"大吗？")
+    if(!t)return
     $.ajax({
         url:"/check_big_mannual",
         type:"get",

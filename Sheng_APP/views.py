@@ -9,7 +9,7 @@ allocate_time=5
 wait_time=5
 activate_mysql=False
 set_trump=2
-keep_time=10
+keep_time=5
 keep_begin_time=0
 _is_keep=-1#-1代表没有延迟需求，其余代表设置的begin_id
 random_card=True
@@ -100,7 +100,7 @@ def addroom(request):
         game_data[room]["banker"]=-1
         game_data[room]["firstgame"]=True
         game_data[room]['check_big_mannual']=False
-        game_data[room]['withdraw']=True
+        game_data[room]['withdraw']=False
     if name not in game_data[room]['player']:
         if len(game_data[room]['player'])==4:
             return render(request,"login.html",{'a':"房间满了,请换房间加入"})
@@ -153,7 +153,6 @@ def requestdata(request):
             game_data[room]['turn']=game_data[room]['player'][_is_keep]
             game_data[room]['begin']=_is_keep
             _is_keep=-1
-            game_data[room]['withdraw']#恢复撤回牌
         res['player']=game_data[room]['player']
         res['playerinformation']=game_data[room]['playerinformation']
         res['level']=game_data[room]['level']
@@ -202,6 +201,7 @@ def requestdata(request):
                 #     res['turn']=""
                 res['tmp_card']=game_data[room]['tmp_card']
                 res['last_card']=game_data[room]['last_card']
+                res['legal_length']=game_data[room]['cardtype'][2]#牌数量
         if game_data[room]['playerinformation'][name][2]:#牌更改了
             res['change']=True
             game_data[room]['playerinformation'][name][2]=False#读完后就没改了
@@ -317,6 +317,7 @@ def maidi(request):
     game_data[room]['begin']=game_data[room]['playerinformation'][name][0]
     game_data[room]['last_card']=[[],[],[],[]]
     game_data[room]['tmp_card']=[[],[],[],[]]
+    game_data[room]['cardtype']=[[],0,0]
     game_data[room]['state']=3#开始打牌
     for card_name in di_card:
         if card_name in game_data[room]['playercard'][name]:
@@ -342,7 +343,7 @@ def check_big(room):#判断谁家的牌最大,并且把分加上去
     global poker
     now_level=game_data[room]['nowlevel']
     trump=game_data[room]['trump']
-    card_type=game_data[room]['cardtype']#(类型+花色)
+    card_type=game_data[room]['cardtype']#(类型,花色,总数)
     tmp_cards=game_data[room]['tmp_card']
     big_player_ids=list(range(4))
     def card_value(card:str):
@@ -400,7 +401,7 @@ def check_big(room):#判断谁家的牌最大,并且把分加上去
         #第二轮筛，把不满足牌类型的删了
         if card_type[0][0][0]==0:#如果全是单牌
             for i in big_player_ids:
-                if tmp_cards[i][0][1]=='i' or tmp_cards[i][0][1]=='o' or color_to_int(tmp_cards[i][0][1])==trump:
+                if tmp_cards[i][0][1]=='i' or tmp_cards[i][0][1]=='o' or number_to_int(tmp_cards[i][0][0])==now_level or color_to_int(tmp_cards[i][0][1])==trump:
                     is_card_trump=1#是主牌
                 else:
                     is_card_trump=0#不是主牌
@@ -419,7 +420,7 @@ def check_big(room):#判断谁家的牌最大,并且把分加上去
                                 break
                     if not is_player_legal:break
                 if is_player_legal:#不满足情况的就删了，满足的才加进去
-                    if tmp_cards[i][0][1]=='i' or tmp_cards[i][0][1]=='o' or color_to_int(tmp_cards[i][0][1])==trump:
+                    if tmp_cards[i][0][1]=='i' or tmp_cards[i][0][1]=='o'or number_to_int(tmp_cards[i][0][0])==now_level or color_to_int(tmp_cards[i][0][1])==trump:
                         is_card_trump=1#是主牌
                     else:
                         is_card_trump=0#不是主牌
@@ -460,7 +461,6 @@ def receive_check_big_mannual(request):
         game_data[room]['turn']=big_name
         game_data[room]['begin']=big_id
         game_data[room]['check_big_mannual']=False
-        game_data[room]['withdraw']=True
     locker.release()
     return HttpResponse("")
 def withdraw(request):
@@ -503,6 +503,7 @@ def show_card(request):
         #     return HttpResponse(ans)
         
         #目前做法是添加withdraw 功能
+        game_data[room]['withdraw']=True
         game_data[room]['cardtype']=card_type_judgement(show_card,room) #返回的是一个tuple
     game_data[room]['tmp_card'][tmp_id]=copy.copy(show_card)
     for card in show_card:
@@ -604,7 +605,7 @@ def card_type_judgement(show_cards:list,room):
         card_category.append([0,len(single_cards)])
     #card_category是牌型
     card_color=judge_card_color(show_cards[0],trump,now_level)
-    return (card_category,card_color)#先是牌型，后是花色
+    return (card_category,card_color,len(show_cards))#先是牌型，后是花色,最后是总数
 def record_poker(poker):
     if activate_mysql:
         conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password=mysqlpassword,database="shengji")
