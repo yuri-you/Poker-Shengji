@@ -40,6 +40,11 @@ function update_message(){
             else{
                 $("#check_big_mannual").addClass("hide")
             }
+            
+            $('#out_card').empty();
+            $('#rival2_card').empty();
+            $('#partner_card').empty();
+            $('#rival1_card').empty();
             di_card=res.di_card
             if(res.show_di){
                 $("#di_card").html("")
@@ -54,7 +59,42 @@ function update_message(){
                     $("#di_card").append(f)
                     console.log($("#di_card").children())
                 }
-                center_card_type=2
+                center_card_type=2  
+                for(var k=0;k<res.tmp_card[id].length;++k){
+                    var t=document.createElement("img");
+                    t.src="/static/img/poker/"+res.tmp_card[id][k]+".jpg";
+                    var str="img"+(48-parseInt(res.tmp_card[id].length/2)+k)+'0'
+                    $(t).addClass('card_figure')
+                    $(t).addClass(str);
+                    $("#out_card").append(t)
+                }
+                //下家出的牌
+                for(var k=0;k<res.tmp_card[(id+1)%4].length;++k){
+                    var t=document.createElement("img");
+                    t.src="/static/img/poker/"+res.tmp_card[(id+1)%4][k]+".jpg";
+                    var str="img"+(85-res.tmp_card[(id+1)%4].length+k)+'0'
+                    $(t).addClass('card_figure')
+                    $(t).addClass(str);
+                    $("#rival2_card").append(t)
+                }
+                //对家出的牌
+                for(var k=0;k<res.tmp_card[(id+2)%4].length;++k){
+                    var t=document.createElement("img");
+                    t.src="/static/img/poker/"+res.tmp_card[(id+2)%4][k]+".jpg";
+                    var str="img"+(48-parseInt(res.tmp_card[(id+2)%4].length/2)+k)+'0'
+                    $(t).addClass('card_figure')
+                    $(t).addClass(str);
+                    $("#partner_card").append(t)
+                }
+                //上家出的牌
+                for(var k=0;k<res.tmp_card[(id+3)%4].length;++k){
+                    var t=document.createElement("img");
+                    t.src="/static/img/poker/"+res.tmp_card[(id+3)%4][k]+".jpg";
+                    var str="img"+(16+k)+'0'
+                    $(t).addClass('card_figure')
+                    $(t).addClass(str);
+                    $("#rival1_card").append(t)
+                }
             }
             switch(res.nowlevel){
                 case 14:$("#now_game_level").text('A');break;
@@ -119,20 +159,6 @@ function update_message(){
                     break;
             }
             $("#trumpholder").text(res.trumpholder)
-            $('#out_card').empty();
-            $('#rival2_card').empty();
-            $('#partner_card').empty();
-            $('#rival1_card').empty();
-            // $('#di_card').empty();
-            if(res.wait_time!=-1){
-                $('#di_card').text(parseInt(res.wait_time))
-                $('#di_card').css("color",'yellow')
-                $('#di_card').css("font-size",'30px')
-                $('#di_card').addClass("img490")
-            }
-            else{
-                $('#di_card').removeClass("img490")
-            }
             if(res.state==0){
                 $('#zhunbei').removeClass('hide')
                 update_message_state0(res)
@@ -174,6 +200,8 @@ function update_message(){
 }
 function update_message_state0(res){
     if(res.state==0){//准备阶段
+        $("#my_card").empty()
+        $("#score").text(res.score)
         var tmp_name=$("#user_name").text()
         var id=res.playerinformation[tmp_name][0]
         if(res.playerinformation[tmp_name][1]){
@@ -218,13 +246,23 @@ function update_message_state0(res){
     }
 }
 function update_message_state1(res){
-    $("#rival2_ready").text("")
-    $("#rival1_ready").text("")
-    $("#partner_ready").text("")
-    $("#score").text("")
-    $("#score_card").empty()
-    $('#trump_color').removeClass('hide')
     if(res.state==1){
+        $('#di_card').empty();
+        if(res.wait_time!=-1){
+            $('#di_card').text(parseInt(res.wait_time))
+            $('#di_card').css("color",'yellow')
+            $('#di_card').css("font-size",'30px')
+            $('#di_card').addClass("img490")
+        }
+        else{
+            $('#di_card').removeClass("img490")
+        }
+        $("#rival2_ready").text("")
+        $("#rival1_ready").text("")
+        $("#partner_ready").text("")
+        $("#score").text(res.score)
+        $("#score_card").empty()
+        $('#trump_color').removeClass('hide')
         $("#self_ready").text("叫主阶段")
         var tmp_name=$("#user_name").text()
         var id=res.playerinformation[tmp_name][0]
@@ -367,25 +405,28 @@ function update_message_state2(res){
         var tmp_name=$("#user_name").text()
         var id=res.playerinformation[tmp_name][0]
         $("#trump_color").children().addClass("disabled")
-        var trumpholderid=res.playerinformation[res.trumpholder][0]
-        var difference=(trumpholderid-id+4)%4
-        var trumpholder_relatedname=''
+        var banker=res.banker
+        var difference=(banker-id+4)%4
+        var banker_relatedname=''
         switch(difference){
-            case 1:trumpholder_relatedname='#rival2_ready';break;
-            case 2:trumpholder_relatedname='#partner_ready';break;
-            case 3:trumpholder_relatedname='#rival1_ready';break;
+            case 1:banker_relatedname='#rival2_ready';break;
+            case 2:banker_relatedname='#partner_ready';break;
+            case 3:banker_relatedname='#rival1_ready';break;
         }
         if(difference!=0){
-            $(trumpholder_relatedname).text("埋底中")
+            $(banker_relatedname).text("埋底中")
         }
         else{
             var div1=document.createElement("div");
             div1.innerHTML='<font size="5" style="color:red" class="img460">埋底中</font>'
             $("#out_card").append(div1)
         }
-        if(tmp_name==res.trumpholder){//是本人埋底
+        if(id==res.banker){//是本人埋底
             $("#play_card").removeClass("hide")
             $("#play_card_button").text("埋牌")
+        }
+        else{
+            $("#play_card").addClass("hide")
         }
     }
     else{
@@ -471,6 +512,7 @@ function update_message_state3(res){
                 $("#rival1_card").append(t)
             }
         }
+        check_legal()
     }
     else{
         alert("state error")
@@ -725,6 +767,7 @@ function mannual_judge_big(self){
         },
         dataType:"JSON"
     })
+    $("#check_big_mannual").addClass(hide)
 }
 function di_pai(){
     if(game_data_state<=2)return;

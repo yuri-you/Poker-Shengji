@@ -9,7 +9,7 @@ allocate_time=5
 wait_time=5
 activate_mysql=False
 set_trump=2
-keep_time=3
+keep_time=2
 keep_begin_time=0
 _is_keep=-1#-1代表没有延迟需求，其余代表设置的begin_id
 random_card=True
@@ -104,6 +104,10 @@ def addroom(request):
         game_data[room]['show_di']=False
         game_data[room]['dicard']=[]
         game_data[room]['nowlevel']=set_trump
+        game_data[room]['score']=0
+        game_data[room]['score_card']=[]
+        game_data[room]['last_card']=[[],[],[],[]]
+        game_data[room]['tmp_card']=[[],[],[],[]]
     if name not in game_data[room]['player']:
         if len(game_data[room]['player'])==4:
             return render(request,"login.html",{'a':"房间满了,请换房间加入"})
@@ -176,6 +180,10 @@ def requestdata(request):
         res['withdraw']=game_data[room]['withdraw']
         res['show_di']=game_data[room]['show_di']
         res['di_card']=game_data[room]['dicard']
+        res['score']=game_data[room]['score']
+        res['score_card']=game_data[room]['score_card']
+        res['tmp_card']=game_data[room]['tmp_card']
+        res['last_card']=game_data[room]['last_card']
         if game_data[room]['state']!=0:#非等待准备
             after_time=time.time()-game_data[room]['begin_time']
             if game_data[room]['state']==1:
@@ -204,17 +212,14 @@ def requestdata(request):
                         banker_name=game_data[room]['player'][game_data[room]['banker']]
                         game_data[room]['playercard'][banker_name]=poker[100:108]+game_data[room]['playercard'][banker_name]
                         game_data[room]['playerinformation'][banker_name][2]=True#庄家摸底了，肯定牌改了
+                        game_data[room]['calltrump_legal']=False
             elif game_data[room]['state']==2:
                 pass
             elif game_data[room]['state']==3:
-                res['score']=game_data[room]['score']
-                res['score_card']=game_data[room]['score_card']
                 res['begin']=game_data[room]['begin']
                 res['turn']=game_data[room]['turn']
                 # if game_data[room]['check_big_mannual']:#需要人工判断
                 #     res['turn']=""
-                res['tmp_card']=game_data[room]['tmp_card']
-                res['last_card']=game_data[room]['last_card']
                 res['legal_length']=game_data[room]['cardtype'][2]#牌数量
         if game_data[room]['playerinformation'][name][2]:#牌更改了
             res['change']=True
@@ -240,7 +245,7 @@ def ready(request):
             if not i[1]:return
         if random_card:
             random.shuffle(poker)
-            record_poker(poker)
+            record_poker(poker,game_data[room]['nowlevel'],game_data[room]['banker'])
         else:
             conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password=mysqlpassword,database="shengji")
             cursor=conn.cursor(cursor=pymysql.cursors.DictCursor)
@@ -257,6 +262,11 @@ def ready(request):
         game_data[room]['dicard']=[]
         game_data[room]['trump']=0
         game_data[room]['trumpholder']=''
+        game_data[room]['score']=0
+        game_data[room]['score_card']=[]
+        game_data[room]['last_card']=[[],[],[],[]]
+        game_data[room]['tmp_card']=[[],[],[],[]]
+        game_data[room]['calltrump_legal']=True
     locker.acquire()
     if request.GET["action"]=='ready':
         game_data[room]['playerinformation'][name][1]=True
@@ -272,6 +282,8 @@ def calltrump(request):
     global locker
     name=request.GET["name"]
     room=request.GET["room"]
+    if not game_data[room]['calltrump_legal']:
+        return HttpResponse("")
     locker.acquire()
     trump=int(request.GET["trump"])
     now_trump=game_data[room]['trump']
@@ -297,7 +309,7 @@ def reallocate(request):
             if not i[1]:return
         if random_card:
             random.shuffle(poker)
-            record_poker(poker)
+            record_poker(poker,game_data[room]['nowlevel'],game_data[room]['banker'])
         else:
             conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password=mysqlpassword,database="shengji")
             cursor=conn.cursor(cursor=pymysql.cursors.DictCursor)
@@ -326,12 +338,8 @@ def maidi(request):
     room=request.GET["room"]
     di_card=request.GET["di_card"].split(',')
     game_data[room]['dicard']=di_card
-    game_data[room]['score']=0
-    game_data[room]['score_card']=[]
     game_data[room]['turn']=name
     game_data[room]['begin']=game_data[room]['playerinformation'][name][0]
-    game_data[room]['last_card']=[[],[],[],[]]
-    game_data[room]['tmp_card']=[[],[],[],[]]
     game_data[room]['cardtype']=[[],0,0]
     game_data[room]['state']=3#开始打牌
     for card_name in di_card:
@@ -358,6 +366,10 @@ def check_big(room):#判断谁家的牌最大,并且把分加上去
     global poker
     now_level=game_data[room]['nowlevel']
     trump=game_data[room]['trump']
+    if trump>=9:
+        trump=5
+    else:
+        trump=(trump-1)%4+1
     card_type=game_data[room]['cardtype']#(类型,花色,总数)
     tmp_cards=game_data[room]['tmp_card']
     big_player_ids=list(range(4))
@@ -518,8 +530,27 @@ def withdraw(request):
     return HttpResponse("")
 def finish_game(di_owner,last_card_type,room):#结束一局，di_owner是最后一轮谁大
     global game_data
+    # if (di_owner+game_data[room]['banker'])%2:#和庄家id不是同奇偶，闲家捡分
+    #     mark,mark_card=count_mark(turn_cards)
+    #     game_data[room]['score']+=mark
+    #     game_data[room]['score_card']+=mark_card
+    # game_data[room]['last_card']=game_data[room]['tmp_card']
+    # game_data[room]['tmp_card']=[[],[],[],[]]
+    # game_data[room]['turn']=big_name
+    # game_data[room]['begin']=big_id
+    # game_data[room]['check_big_mannual']=False
+    print('庄家'+game_data[room]['player'][game_data[room]['banker']])
     if (di_owner+game_data[room]['banker'])%2:#和庄家id不是同奇偶，闲家捡分
-        times=2**(last_card_type[0][0][0])
+        #最后一轮分
+        turn_cards=[]
+        for i in game_data[room]['tmp_card']:
+            turn_cards+=i
+        mark,mark_card=count_mark(turn_cards)
+        game_data[room]['score']+=mark
+        game_data[room]['score_card']+=mark_card
+        
+        #底牌的分
+        times=2**((last_card_type[0][0][0])+1)
         mark,mark_card=count_mark(game_data[room]['dicard'])
         game_data[room]['score']+=times*mark
     if game_data[room]['score']<80:#过牌
@@ -544,6 +575,7 @@ def show_card(request):
     global game_data
     global poker
     global locker
+    # if
     locker.acquire()
     name=request.GET["name"]
     room=request.GET["room"]
@@ -573,6 +605,7 @@ def show_card(request):
             if len(game_data[room]['playercard'][name])==0:#牌打完了
                 finish_game(big_id,game_data[room]['cardtype'],room)
             else:
+                #在requestdata时候更新
                 global keep_begin_time
                 global _is_keep
                 keep_begin_time=time.time()
@@ -662,7 +695,7 @@ def card_type_judgement(show_cards:list,room):
     #card_category是牌型
     card_color=judge_card_color(show_cards[0],trump,now_level)
     return (card_category,card_color,len(show_cards))#先是牌型，后是花色,最后是总数
-def record_poker(poker):
+def record_poker(poker,nowlevel,banker):
     if activate_mysql:
         conn = pymysql.connect(user='debian-sys-maint',charset='utf8',password=mysqlpassword,database="shengji")
         cursor=conn.cursor(cursor=pymysql.cursors.DictCursor)
@@ -670,7 +703,7 @@ def record_poker(poker):
         nowtime=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         f=open("log.txt",'a')
         card_information=json.dumps(poker)
-        f.write(nowtime+'\n')
+        f.write(nowtime+' nowlevel='+str(nowlevel)+' bankerid='+str(banker)+'\n')
         instruction="insert shengji(time,card_information) values(%(n1)s,%(n2)s);"
         cursor.execute(instruction,{"n1":nowtime,"n2":card_information})
         conn.commit()
