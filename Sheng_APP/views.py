@@ -161,6 +161,7 @@ def requestdata(request):
                 mark,mark_card=count_mark(turn_cards)
                 game_data[room]['score']+=mark
                 game_data[room]['score_card']+=mark_card
+            game_data[room]['turn_times']+=1
             game_data[room]['last_card']=game_data[room]['tmp_card']
             # s=keep_begin_time+keep_time-time.time()
             game_data[room]['tmp_card']=[[],[],[],[]]
@@ -216,6 +217,7 @@ def requestdata(request):
             elif game_data[room]['state']==2:
                 pass
             elif game_data[room]['state']==3:
+                res['turn_times']=game_data[room]['turn_times']
                 res['begin']=game_data[room]['begin']
                 res['turn']=game_data[room]['turn']
                 # if game_data[room]['check_big_mannual']:#需要人工判断
@@ -341,6 +343,7 @@ def maidi(request):
     game_data[room]['turn']=name
     game_data[room]['begin']=game_data[room]['playerinformation'][name][0]
     game_data[room]['cardtype']=[[],0,0]
+    game_data[room]['turn_times']=0#现在是这副牌第几轮
     game_data[room]['state']=3#开始打牌
     for card_name in di_card:
         if card_name in game_data[room]['playercard'][name]:
@@ -495,6 +498,7 @@ def receive_check_big_mannual(request):
         game_data[room]['turn']=big_name
         game_data[room]['begin']=big_id
         game_data[room]['check_big_mannual']=False
+        game_data[room]['turn_times']+=1
     locker.release()
     return HttpResponse("")
 def count_mark(cards:list):

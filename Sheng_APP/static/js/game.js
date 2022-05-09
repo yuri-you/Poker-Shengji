@@ -13,6 +13,9 @@ var last_card_show_second
 var legal_length
 var last_card_show=false
 var di_card=[]
+var look_last_turn=false
+var turn_times=-1//#现在是该局的第几轮
+var last_cards,tmp_cards//上一轮的牌，这一轮的牌
 var is_up=Array(25).fill(false);
 function update_message(){
     $.ajax({
@@ -25,6 +28,18 @@ function update_message(){
         },
         dataType:"JSON",
         success:function(res){
+            if(res.state!=2&&res.state!=3){
+                $("#play_card_button").addClass('hide')
+            }
+            else{
+                $("#play_card_button").removeClass('hide')
+            }
+            if(res.state!=3){
+                $("#withdraw").addClass('hide')
+            }
+            else{
+                $("#withdraw").removeClass('hide')
+            }
             var tmp_name=$("#user_name").text()
             var id=res.playerinformation[tmp_name][0]
             if(id){
@@ -47,7 +62,8 @@ function update_message(){
             $('#rival1_card').empty();
             di_card=res.di_card
             if(res.show_di){
-                $("#di_card").html("")
+                $("#di_card").empty()
+                $("#di_card").removeClass("img490")
                 for(var i=0;i<8;++i){
                     var f=document.createElement("img");
                     f.src='/static/img/poker/'+di_card[i]+'.jpg'
@@ -445,6 +461,8 @@ function update_message_state3(res){
         $('#rival2_ready').text("")
         $('#rival1_ready').text("")
         $('#partner_ready').text("")
+        last_cards=res.last_card
+        tmp_cards=res.tmp_card
         legal_length=res.legal_length
         if(res.withdraw&&(id+1)%res.player.length==res.playerinformation[res.turn][0]){
             $("#withdraw").removeClass("disabled")
@@ -471,10 +489,49 @@ function update_message_state3(res){
             $(t).addClass("img"+(k+1)+'0')
             $("#score_card").append(t)
         }
-        if(last_card_show&&(last_card_show_second+60-(new Date().getSeconds()))%60<last_card_exist_time){
-           //小于上一轮牌存在时间，不修改 
+        if(turn_times!=res.turn_times){
+            look_last_turn=false
+            turn_times=res.turn_times
+        }
+        if(look_last_turn){
+            for(var k=0;k<res.last_card[id].length;++k){
+                var t=document.createElement("img");
+                t.src="/static/img/poker/"+res.last_card[id][k]+".jpg";
+                var str="img"+(48-parseInt(res.last_card[id].length/2)+k)+'0'
+                $(t).addClass('card_figure')
+                $(t).addClass(str);
+                $("#out_card").append(t)
+            }
+            //下家出的牌
+            for(var k=0;k<res.last_card[(id+1)%4].length;++k){
+                var t=document.createElement("img");
+                t.src="/static/img/poker/"+res.last_card[(id+1)%4][k]+".jpg";
+                var str="img"+(85-res.last_card[(id+1)%4].length+k)+'0'
+                $(t).addClass('card_figure')
+                $(t).addClass(str);
+                $("#rival2_card").append(t)
+            }
+            //对家出的牌
+            for(var k=0;k<res.last_card[(id+2)%4].length;++k){
+                var t=document.createElement("img");
+                t.src="/static/img/poker/"+res.last_card[(id+2)%4][k]+".jpg";
+                var str="img"+(48-parseInt(res.last_card[(id+2)%4].length/2)+k)+'0'
+                $(t).addClass('card_figure')
+                $(t).addClass(str);
+                $("#partner_card").append(t)
+            }
+            //上家出的牌
+            for(var k=0;k<res.last_card[(id+3)%4].length;++k){
+                var t=document.createElement("img");
+                t.src="/static/img/poker/"+res.last_card[(id+3)%4][k]+".jpg";
+                var str="img"+(16+k)+'0'
+                $(t).addClass('card_figure')
+                $(t).addClass(str);
+                $("#rival1_card").append(t)
+            }
         }
         else{
+            //看这一轮的牌
             //自己出的牌
             for(var k=0;k<res.tmp_card[id].length;++k){
                 var t=document.createElement("img");
@@ -814,5 +871,10 @@ function modify(){
     else{
         var tempwindow=open('_blank');
         tempwindow.location='/requestmodify?room='+$("#room").text();
+    }
+}
+function show_last_cards(){
+    if(game_data_state==3){
+    look_last_turn=!look_last_turn
     }
 }
