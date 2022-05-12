@@ -73,7 +73,6 @@ function update_message(){
                     else classstring='img5'+(i-6)+'0'
                     $(f).addClass(classstring)
                     $("#di_card").append(f)
-                    console.log($("#di_card").children())
                 }
                 center_card_type=2  
                 for(var k=0;k<res.tmp_card[id].length;++k){
@@ -453,6 +452,7 @@ function update_message_state3(res){
     var tmp_name=$("#user_name").text()
     var id=res.playerinformation[tmp_name][0]
     if(res.state==3){
+        $('#di_card').removeClass("img490")
         $("#trump_color").addClass("hide")
         $("#self_ready").text("出牌阶段")
         $("#play_card").removeClass("hide")
@@ -831,11 +831,11 @@ function di_pai(){
     if($('#banker').text()!=$("#user_name").text())return;
     // console.log($('#di_card').text()!='')
     if(center_card_type==2){
-        $('#di_card').html("")
+        $('#di_card').empty()
         center_card_type=0
     }
     else{
-        $("#di_card").html("")
+        $("#di_card").empty()
         for(var i=0;i<8;++i){
             var f=document.createElement("img");
             f.src='/static/img/poker/'+di_card[i]+'.jpg'
@@ -846,7 +846,6 @@ function di_pai(){
             console.log(classstring)
             $(f).addClass(classstring)
             $("#di_card").append(f)
-            console.log($("#di_card").children())
         }
         center_card_type=2
     }

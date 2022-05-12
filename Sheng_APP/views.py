@@ -5,8 +5,8 @@ mysqlpasswords=["lPVVX9pMskl6Vzoj","MxH4cfJT6fft4iA5"]
 mysqlpassword=mysqlpasswords[1]
 locker=threading.Lock()
 test_number=4
-allocate_time=5
-wait_time=5
+allocate_time=10
+wait_time=6
 activate_mysql=False
 set_trump=2
 keep_time=2
@@ -296,6 +296,8 @@ def calltrump(request):
         game_data[room]['trumpholder']=name
         for user_name in game_data[room]['player']:
             game_data[room]['playerinformation'][user_name][2]=True
+        if time.time()-game_data[room]['begin_time']>allocate_time:
+            game_data[room]['begin_time']=time.time()-allocate_time
     locker.release()
     return HttpResponse("")
 def reallocate(request):
