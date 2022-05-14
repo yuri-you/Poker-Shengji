@@ -1,19 +1,20 @@
 from http.client import HTTPResponse
 from django.shortcuts import render,HttpResponse
 import os,random,json,pymysql,time,datetime,threading,copy
+from pkg_resources import require
 mysqlpasswords=["lPVVX9pMskl6Vzoj","MxH4cfJT6fft4iA5"]
 mysqlpassword=mysqlpasswords[1]
 locker=threading.Lock()
 test_number=4
-allocate_time=10
-wait_time=6
+allocate_time=5
+wait_time=2
 activate_mysql=False
 set_trump=2
 keep_time=2
 keep_begin_time=0
 _is_keep=-1#-1代表没有延迟需求，其余代表设置的begin_id
 random_card=True
-cardtime="2022-05-02 06:47:08"
+cardtime="2022-05-14 16:50:02"
 game_data=dict()
 poker=[]
 number=str()
@@ -471,6 +472,89 @@ def check_big(room):#判断谁家的牌最大,并且把分加上去
                     ans_id=i[0]
                     ans_value=tmp_value
         return True,ans_id
+    elif card_type[0][0][0]<=2:#最多只有拖拉
+        new_big_player_ids=[]
+        #第一轮筛，把所有牌不是同花色的给删了,以及非主非同颜色副牌删了，这必不可能是最大
+        for i in big_player_ids:
+            is_player_legal=True
+            player_card_type=-1
+            for card in tmp_cards[i]:
+                tmp_player_card_type=judge_card_color(card,trump,now_level)
+                if tmp_player_card_type!=trump and tmp_player_card_type!=card_type[1]:#既不是主，也不是选择的花色
+                    is_player_legal=False
+                    break
+                elif player_card_type!=-1 and player_card_type!=tmp_player_card_type:#和上一张不一样
+                    is_player_legal=False
+                    break
+                if player_card_type==-1:
+                    player_card_type=tmp_player_card_type
+            if is_player_legal:#不满足情况的就删了，满足的才加进去
+                new_big_player_ids.append(i)
+        #第一轮删结束，更新big_id集合
+        if len(new_big_player_ids)==1:#只剩一个了
+            return True,new_big_player_ids[0]
+        else:
+            big_player_ids=new_big_player_ids
+            new_big_player_ids=[]
+        #第二轮筛牌型不满足的
+        require_type=copy.deepcopy(card_type[0])
+        for live in big_player_ids:
+            now_player_type1=card_type_judgement(tmp_cards[live],room)[0]
+            satisfaction=True
+            now_player_type=[]
+            for l in now_player_type1:
+                now_player_type+=[l[0]]*l[1]
+            now_player_type.sort()
+            for length_type in require_type:
+                if length_type[0]!=0:
+                    for i in range(length_type[1]):
+                        if now_player_type[-1]<length_type[0]:
+                            satisfaction=False
+                            break
+                        else:
+                            get_length=now_player_type[-1]
+                            now_player_type.pop(-1)
+                            get_length-=length_type[0]
+                            now_player_type.append(get_length)
+                            now_player_type.sort()
+                if not satisfaction:
+                    break
+            if satisfaction:
+                new_big_player_ids.append(live)
+        #第二轮结束
+        if len(new_big_player_ids)==1:#只剩一个了
+            return True,new_big_player_ids[0] 
+        #第三轮
+        ans_value=0
+        for live in new_big_player_ids:
+            pair_cards=[]
+            single_cards=[]
+            for i in tmp_cards[live]:
+                if len(single_cards)==0 or single_cards[-1]!=i:
+                    single_cards.append(i)
+                else:
+                    single_cards.pop(-1)
+                    pair_cards.append(card_value(i))
+            last=-1
+            continue_number=0
+            for i in pair_cards:
+                if last==-1 or last-i!=1:
+                    last=i
+                    continue_number=1
+                else:
+                    last-=1
+                    continue_number+=1
+                if continue_number==card_type[0][0][0]:
+                    break
+            if judge_card_color(tmp_cards[live][0],trump,now_level)==trump:#是主牌
+                last+=100
+            if last>ans_value:
+                big_id=live
+                ans_value=last
+        return True,big_id
+                                
+                    
+            
     else:
         # game_data[room]['check_big_mannual']=True
         return False,0#人工选
@@ -486,6 +570,7 @@ def receive_check_big_mannual(request):
     big_name=request.GET["big_name"]
     big_id=game_data[room]["playerinformation"][big_name][0]
     if len(game_data[room]['playercard'][game_data[room]['player'][0]])==0:#牌打完了
+        game_data[room]['check_big_mannual']=False
         finish_game(big_id,game_data[room]['cardtype'],room)
     else:
         if (big_id+game_data[room]['banker'])%2:#和庄家id不是同奇偶，闲家捡分
@@ -738,6 +823,7 @@ def modifydata(request):
         is_modify=True
     if is_modify:
         game_data[room]['nowlevel']=game_data[room]['level'][game_data[room]['banker']%2]
+    game_data[room]['firstgame']=False
     locker.release()
     return render(request,'close.html')
 # Create your views here.

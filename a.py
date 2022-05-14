@@ -10,7 +10,7 @@
 # # sql="insert into poker_record(time,card) values( %(n1)s, %(n2)s)"
 # # cursor.execute(sql,{'n1':datetime.datetime.now(),'n2':"abcdefg"})
 # # conn.commit()
-x=[3,4]
+x=[3,4,1,2]
 y=[1,2]
-x+=y
+x.sort(reverse=True)
 z=1
