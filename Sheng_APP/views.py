@@ -6,15 +6,15 @@ mysqlpasswords=["lPVVX9pMskl6Vzoj","MxH4cfJT6fft4iA5"]
 mysqlpassword=mysqlpasswords[1]
 locker=threading.Lock()
 test_number=4
-allocate_time=5
-wait_time=2
+allocate_time=3
+wait_time=3
 activate_mysql=False
 set_trump=2
 keep_time=2
 keep_begin_time=0
 _is_keep=-1#-1代表没有延迟需求，其余代表设置的begin_id
 random_card=True
-cardtime="2022-05-14 16:50:02"
+cardtime="2022-05-16 11:33:50"
 game_data=dict()
 poker=[]
 number=str()
@@ -109,6 +109,7 @@ def addroom(request):
         game_data[room]['score_card']=[]
         game_data[room]['last_card']=[[],[],[],[]]
         game_data[room]['tmp_card']=[[],[],[],[]]
+        game_data[room]['controler']=0
     if name not in game_data[room]['player']:
         if len(game_data[room]['player'])==4:
             return render(request,"login.html",{'a':"房间满了,请换房间加入"})
@@ -186,6 +187,7 @@ def requestdata(request):
         res['score_card']=game_data[room]['score_card']
         res['tmp_card']=game_data[room]['tmp_card']
         res['last_card']=game_data[room]['last_card']
+        res['controler']=game_data[room]['controler']
         if game_data[room]['state']!=0:#非等待准备
             after_time=time.time()-game_data[room]['begin_time']
             if game_data[room]['state']==1:
@@ -224,6 +226,7 @@ def requestdata(request):
                 # if game_data[room]['check_big_mannual']:#需要人工判断
                 #     res['turn']=""
                 res['legal_length']=game_data[room]['cardtype'][2]#牌数量
+                res['legal_color']=game_data[room]['cardtype'][1]#牌颜色
         if game_data[room]['playerinformation'][name][2]:#牌更改了
             res['change']=True
             game_data[room]['playerinformation'][name][2]=False#读完后就没改了
@@ -676,6 +679,11 @@ def show_card(request):
     show_card=request.GET['show_card'].split(',')
     tmp_id=game_data[room]['playerinformation'][name][0]
     res=dict()
+    for card in show_card:
+        if card not in game_data[room]['playercard'][name]:
+            print(name)
+            return
+        game_data[room]['playercard'][name].remove(card)
     if game_data[room]['player'][game_data[room]['begin']]==name:#第一个人出牌
         # res["legal"],res['force_card']=check_first_show_card_legal(show_card)
         # if not res["legal"]:
@@ -686,8 +694,6 @@ def show_card(request):
         game_data[room]['withdraw']=True
         game_data[room]['cardtype']=card_type_judgement(show_card,room) #返回的是一个tuple
     game_data[room]['tmp_card'][tmp_id]=copy.copy(show_card)
-    for card in show_card:
-        game_data[room]['playercard'][name].remove(card)
     game_data[room]['playerinformation'][name][2]=True #修改过牌
     if game_data[room]['begin']==(tmp_id+1)%test_number:#最后一个人出牌
         game_data[room]['withdraw']=False#一轮打完了，ban掉撤回牌
@@ -823,7 +829,20 @@ def modifydata(request):
         is_modify=True
     if is_modify:
         game_data[room]['nowlevel']=game_data[room]['level'][game_data[room]['banker']%2]
-    game_data[room]['firstgame']=False
+        game_data[room]['firstgame']=False
+    if request.GET['exchange1'] in game_data[room]['playerinformation'] and request.GET['exchange2'] in game_data[room]['playerinformation']:
+        id1=game_data[room]['playerinformation'][request.GET['exchange1']][0]
+        id2=game_data[room]['playerinformation'][request.GET['exchange2']][0]
+        tmp=game_data[room]['player'][id1]
+        game_data[room]['player'][id1]=game_data[room]['player'][id2]
+        game_data[room]['player'][id2]=tmp
+        tmp=game_data[room]['playerinformation'][request.GET['exchange1']]
+        game_data[room]['playerinformation'][request.GET['exchange1']]=game_data[room]['playerinformation'][request.GET['exchange2']]
+        game_data[room]['playerinformation'][request.GET['exchange2']]=tmp
+        if id1==game_data[room]['controler']:
+            game_data[room]['controler']=id2
+        elif id2==game_data[room]['controler']:
+            game_data[room]['controler']=id1
     locker.release()
     return render(request,'close.html')
 # Create your views here.

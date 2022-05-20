@@ -11,6 +11,7 @@ var turn_player
 var last_card_exist_time=5
 var last_card_show_second
 var legal_length
+var legal_color
 var last_card_show=false
 var di_card=[]
 var look_last_turn=false
@@ -42,11 +43,14 @@ function update_message(){
             }
             var tmp_name=$("#user_name").text()
             var id=res.playerinformation[tmp_name][0]
-            if(id){
+            if(id!=res.controler){
                 $("#modify_data").addClass('hide')
             }
+            else{
+                $("#modify_data").removeClass('hide')
+            }
             game_data_state=res.state
-            if(res.check_big_mannual&&id==0){
+            if(res.check_big_mannual&&id==res.controler){
                 $("#check_big_mannual").removeClass("hide")
                 for(var i=0;i<res.player.length;++i){
                     $("#big"+i).text(res.player[i])
@@ -464,6 +468,7 @@ function update_message_state3(res){
         last_cards=res.last_card
         tmp_cards=res.tmp_card
         legal_length=res.legal_length
+        legal_color=res.legal_color
         if(res.withdraw&&(id+1)%res.player.length==res.playerinformation[res.turn][0]){
             $("#withdraw").removeClass("disabled")
         }
@@ -636,23 +641,33 @@ function check_legal(){
             $("#play_card_button").addClass("disabled")
             return
         }
-        var show_card=Array()
+        var _show_card=Array()
+        var _all_legal_card=Array()
         $('.up').each(function (index, domEle) {
             // index就是索引值
             var str=domEle.src
-            show_card.push(str.substr(str.lastIndexOf("/") + 1,str.lastIndexOf(".")-str.lastIndexOf("/")-1))
+            _show_card.push(str.substr(str.lastIndexOf("/") + 1,str.lastIndexOf(".")-str.lastIndexOf("/")-1))
         });
+        var _all_my_card=$('#my_card').children()
+        for(var t=0;t<_all_my_card.length;t+=1) {
+            // index就是索引值
+            var str=_all_my_card[t].src
+            var tmp_card_name=str.substr(str.lastIndexOf("/") + 1,str.lastIndexOf(".")-str.lastIndexOf("/")-1)
+            if(Get_color_id(tmp_card_name)==legal_color){
+                _all_legal_card.push(tmp_card_name)
+            }
+        }
         if(begin_player==$("#user_name").text()){
             //第一手出牌，只要判断是不是出的同一类花色的牌，甩牌失败后端判断
-            if(show_card.length==0){
+            if(_show_card.length==0){
                 $("#play_card_button").addClass("disabled")
                 // return
             }
             else{
-                var color=Get_color_id(show_card[0])
+                var color=Get_color_id(_show_card[0])
                 var same=true
-                for(var i=1;i<show_card.length;++i){
-                    if(color!=Get_color_id(show_card[i])){
+                for(var i=1;i<_show_card.length;++i){
+                    if(color!=Get_color_id(_show_card[i])){
                         same=false
                         break
                     }
@@ -667,11 +682,33 @@ function check_legal(){
         }
         else{
             //跟牌，目前只判断数量是否符合
-            if(show_card.length!=legal_length){
-                $("#play_card_button").addClass("disabled")
-                // return
+            if(_show_card.length==legal_length){
+                var now_judge_legal=true
+                if(_all_legal_card.length>=legal_length){
+                    for(var card_id=0;card_id<legal_length;card_id+=1){//该门花色数量多余要出的数量，必须全是这门花色的
+                        if(Get_color_id(_show_card[card_id])!=legal_color){
+                            now_judge_legal=false
+                            break
+                        }
+                    }
+                }
+                else{
+                    var _number=0
+                    for(var card_id=0;card_id<legal_length;card_id+=1){//该门花色数量多余要出的数量，必须全是这门花色的
+                        if(Get_color_id(_show_card[card_id])==legal_color){
+                            _number+=1
+                        }
+                    }
+                    if(_number<_all_legal_card.length){
+                        now_judge_legal=false
+                    }
+                }
+                if(now_judge_legal){
+                    $("#play_card_button").removeClass("disabled")
+                    return
+                }
             }
-            else $("#play_card_button").removeClass("disabled")
+            $("#play_card_button").addClass("disabled")
         }
     }
 }
@@ -875,5 +912,14 @@ function modify(){
 function show_last_cards(){
     if(game_data_state==3){
     look_last_turn=!look_last_turn
+    }
+}
+function cardtype(card){
+    if(card[1]=='i'||card[1]=='o')return ;
+    switch(card[1]){
+        case 'D':return 1;
+        case 'C':return 2;
+        case 'H':return 3;
+        case 'S':return 4;
     }
 }

@@ -14,18 +14,17 @@
             <div>
                 <font size="5" style="color:#00a6ff" >房间{{room}}信息修改</font>
             </div>
-            <form action='/modifydata' method='get' id='table'>
-            </form>
             <form action='/modifydata' method='get' id='table' onsubmit="window.opener=null;alert('修改成功');">
                 <p>比分:<input type="text" name="myscore">:<input type="text" name="rivalscore"></p>
                 <p>庄家:<input type="text" name="banker"></p>
+                <p>交换:<input type="text" name="exchange1">:<input type="text" name="exchange2"></p>
                 <div style="display: none;"><input type="text" name="room" value={{room}}></div>
-                <input type="submit" class="btn btn-default navbar-btn" style="text-align:center;width: 70px;" value="修改信息" onClick='modify1(this)'>
+                <input type="submit" class="btn btn-default navbar-btn" style="text-align:center;width: 70px;" value="修改信息">
                 {% comment %} <input type="submit"   value="Submit"  > {% endcomment %}
             </form>
         </div>
 	</body>
     {% comment %} <script src="/static/plugins/jquery/jquery.js"></script>
 	<script type="text/javascript"> {% endcomment %}
-	</script>
+	{% comment %} </script> {% endcomment %}
 </html>
